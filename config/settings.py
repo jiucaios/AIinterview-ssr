@@ -6,6 +6,12 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
 DEBUG = True
@@ -79,6 +85,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DASHSCOPE_API_KEY = os.getenv('DASHSCOPE_API_KEY', '')
 QWEN_MODEL = os.getenv('QWEN_MODEL', 'qwen-plus')
 QWEN_MODEL_BASE = os.getenv('QWEN_MODEL_BASE', 'qwen-plus')
+QWEN_ENABLE_THINKING = env_bool('QWEN_ENABLE_THINKING', False)
+ANSWER_EVALUATION_ENABLED = env_bool('ANSWER_EVALUATION_ENABLED', False)
+JD_SUMMARY_ENABLED = env_bool('JD_SUMMARY_ENABLED', False)
 QWEN_EMBEDDING_MODEL = os.getenv('QWEN_EMBEDDING_MODEL', 'text-embedding-v4')
 EMBEDDING_MODEL = QWEN_EMBEDDING_MODEL
 SESSION_TIMEOUT = int(os.getenv('SESSION_TIMEOUT', '120'))

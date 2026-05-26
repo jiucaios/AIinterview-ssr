@@ -43,7 +43,8 @@ class QwenService:
         dialogue_history: List[Dict[str, str]] = None,
         temperature: float = 0.1,
         max_tokens: int = 500,
-        use_advanced_model: bool = True
+        use_advanced_model: bool = True,
+        enable_thinking: Optional[bool] = None
     ) -> Optional[str]:
         """生成问题或回答
         
@@ -68,6 +69,15 @@ class QwenService:
 
         try:
             model = cls.get_model(use_advanced=use_advanced_model)
+            if enable_thinking is None:
+                enable_thinking = getattr(settings, 'QWEN_ENABLE_THINKING', False)
+            call_kwargs = {
+                'model': model,
+                'messages': messages,
+                'temperature': temperature,
+                'max_tokens': max_tokens,
+                'enable_thinking': enable_thinking,
+            }
             
             # 判断是否是新架构模型（qwen3.x系列都需要使用MultiModalConversation API）
             # 根据阿里云文档，qwen3.6-plus 必须使用 MultiModalConversation API
@@ -75,19 +85,11 @@ class QwenService:
             
             if is_new_architecture and MultiModalConversation:
                 # 使用新架构的MultiModalConversation API
-                response = MultiModalConversation.call(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
+                response = MultiModalConversation.call(**call_kwargs)
             else:
                 # 使用旧版Generation API
                 response = Generation.call(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                    **call_kwargs,
                     result_format='message'
                 )
             
@@ -157,6 +159,9 @@ class QwenService:
             return ''
         
         if len(job_description) <= 200:
+            return job_description[:200]
+
+        if not getattr(settings, 'JD_SUMMARY_ENABLED', False):
             return job_description[:200]
         
         system_prompt = "你是一位资深的HR专家，擅长提炼岗位核心要求。"
@@ -241,6 +246,9 @@ class QwenService:
 
     @classmethod
     def validate_answer_quality(cls, question: str, answer: str, round_type: str) -> dict:
+        if not getattr(settings, 'ANSWER_EVALUATION_ENABLED', False):
+            return {'valid': True, 'reason': 'answer evaluation disabled', 'confidence': 1.0, 'issues': []}
+
         if not cls.get_api_key():
             return {'valid': True, 'reason': 'API not configured', 'confidence': 1.0}
 
