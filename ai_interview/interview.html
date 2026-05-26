@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI面试 - 面试进行中</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .interview-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .status-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .question-section {
+            padding: 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .question-number {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #1e293b;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-audio {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-audio:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-audio:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .recording-section {
+            padding: 30px;
+        }
+        
+        .asr-status {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .answer-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-row {
+            margin-top: 15px;
+        }
+        
+        .btn-start-recording {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-start-recording:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-stop-recording {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-stop-recording:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        }
+        
+        .btn-submit-answer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-submit-answer:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-submit-answer:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .recording-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: inline-block;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .recording-indicator.active {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+            animation: blink 1s ease-in-out infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .toast.warning {
+            background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI面试</h1>
+            <p>请认真回答每个问题，面试过程将自动录音</p>
+        </div>
+        
+        <div class="interview-card">
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>面试进行中</span>
+                </div>
+                <div id="roundInfo">第 1/6 轮</div>
+            </div>
+            
+            <div class="question-section">
+                <div class="question-number" id="questionNumber">问题 1</div>
+                <div class="question-text" id="questionText">正在获取问题...</div>
+                
+                <div class="audio-controls">
+                    <button class="btn-audio" id="playAudioBtn">
+                        🔊 播放问题
+                    </button>
+                    <button class="btn-audio" id="replayAudioBtn">
+                        🔄 重新播放
+                    </button>
+                </div>
+            </div>
+            
+            <div class="recording-section">
+                <div class="asr-status" id="asrStatus">准备就绪</div>
+                
+                <textarea class="answer-input" id="answerInput" placeholder="您的回答将在这里显示..."></textarea>
+                
+                <div class="btn-row" id="btnRow">
+                    <button class="btn-start-recording" id="startRecordingBtn">
+                        🎤 开始回答
+                    </button>
+                </div>
+                
+                <button class="btn-submit-answer" id="submitAnswerBtn">
+                    ✅ 提交回答
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = '';
+        let candidateId = '';
+        let currentQuestion = '';
+        let roundNumber = 1;
+        let maxRounds = 6;
+        
+        let isRecording = false;
+        let isInterviewPaused = false;
+        
+        let speechRecognition = null;
+        let isSpeechRecognitionActive = false;
+        
+        let audioElement = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('session_id');
+            candidateId = urlParams.get('candidate_id');
+            currentQuestion = decodeURIComponent(urlParams.get('question') || '');
+            
+            if (!sessionId) {
+                showToast('面试会话无效', 'error');
+                return;
+            }
+            
+            document.getElementById('questionText').textContent = currentQuestion || '正在获取问题...';
+            
+            setTimeout(() => {
+                playQuestionAudio(currentQuestion);
+            }, 500);
+            
+            document.getElementById('playAudioBtn').addEventListener('click', function() {
+                playQuestionAudio(currentQuestion);
+            });
+            
+            document.getElementById('replayAudioBtn').addEventListener('click', function() {
+                playQuestionAudio(currentQuestion);
+            });
+            
+            document.getElementById('startRecordingBtn').addEventListener('click', function() {
+                toggleRecording();
+            });
+            
+            document.getElementById('submitAnswerBtn').addEventListener('click', function() {
+                submitAnswer();
+            });
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                console.log('语音功能可用');
+            } else {
+                showToast('浏览器不支持语音功能', 'warning');
+            }
+        });
+        
+        function playQuestionAudio(text) {
+            if (!text) return;
+            
+            const playBtn = document.getElementById('playAudioBtn');
+            const replayBtn = document.getElementById('replayAudioBtn');
+            playBtn.disabled = true;
+            replayBtn.disabled = true;
+            playBtn.innerHTML = '<span class="loading-spinner"></span>播放中...';
+            
+            if (audioElement) {
+                audioElement.pause();
+                audioElement = null;
+            }
+            
+            fetch('/api/ai-interview/speech/tts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.audio_base64) {
+                    try {
+                        const audioBlob = base64ToBlob(data.audio_base64, 'audio/wav');
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        audioElement = new Audio(audioUrl);
+                        
+                        audioElement.onloadedmetadata = function() {
+                            audioElement.play().then(() => {
+                                console.log('Audio playing');
+                            }).catch(e => {
+                                console.log('Auto-play blocked:', e);
+                                showToast('自动播放被阻止，请点击播放按钮', 'warning');
+                                playBtn.disabled = false;
+                                replayBtn.disabled = false;
+                                playBtn.innerHTML = '🔊 播放问题';
+                            });
+                        };
+                        
+                        audioElement.onended = function() {
+                            playBtn.disabled = false;
+                            replayBtn.disabled = false;
+                            playBtn.innerHTML = '🔊 播放问题';
+                        };
+                        
+                        audioElement.onerror = function(e) {
+                            console.error('Audio error:', e);
+                            showToast('音频播放失败', 'error');
+                            playBtn.disabled = false;
+                            replayBtn.disabled = false;
+                            playBtn.innerHTML = '🔊 播放问题';
+                        };
+                    } catch (e) {
+                        console.error('Audio processing error:', e);
+                        showToast('音频处理失败', 'error');
+                        playBtn.disabled = false;
+                        replayBtn.disabled = false;
+                        playBtn.innerHTML = '🔊 播放问题';
+                    }
+                } else {
+                    showToast('未获得语音数据', 'error');
+                    playBtn.disabled = false;
+                    replayBtn.disabled = false;
+                    playBtn.innerHTML = '🔊 播放问题';
+                }
+            })
+            .catch(error => {
+                console.error('获取语音失败:', error);
+                showToast('获取语音失败', 'error');
+                playBtn.disabled = false;
+                replayBtn.disabled = false;
+                playBtn.innerHTML = '🔊 播放问题';
+            });
+        }
+        
+        function base64ToBlob(base64, mimeType) {
+            const byteString = atob(base64);
+            const arrayBuffer = new ArrayBuffer(byteString.length);
+            const intArray = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < byteString.length; i++) {
+                intArray[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([intArray], { type: mimeType });
+        }
+        
+        function startContinuousRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('您的浏览器不支持语音识别功能，请使用Chrome或Edge浏览器', 'error');
+                return;
+            }
+            
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                speechRecognition = new SpeechRecognition();
+                
+                speechRecognition.continuous = true;
+                speechRecognition.interimResults = true;
+                speechRecognition.lang = 'zh-CN';
+                speechRecognition.maxAlternatives = 1;
+                
+                speechRecognition.start();
+                isRecording = true;
+                isSpeechRecognitionActive = true;
+                
+                document.getElementById('recordingIndicator')?.classList.add('active');
+                document.getElementById('asrStatus').innerHTML = '<span class="recording-indicator active"></span>🔊 正在监听...';
+                
+                speechRecognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    const answerInput = document.getElementById('answerInput');
+                    
+                    if (finalTranscript) {
+                        answerInput.value += finalTranscript;
+                    }
+                    
+                    if (interimTranscript) {
+                        document.getElementById('asrStatus').innerHTML = `<span class="recording-indicator active"></span>🔊 识别中: ${interimTranscript.substring(0, 20)}...`;
+                    } else {
+                        document.getElementById('asrStatus').innerHTML = '<span class="recording-indicator active"></span>🔊 正在监听...';
+                    }
+                    
+                    answerInput.scrollTop = answerInput.scrollHeight;
+                };
+                
+                speechRecognition.onerror = function(event) {
+                    console.error('语音识别错误:', event.error);
+                    
+                    switch(event.error) {
+                        case 'no-speech':
+                            document.getElementById('asrStatus').innerHTML = '<span class="recording-indicator"></span>🔇 未检测到语音';
+                            break;
+                        case 'audio-capture':
+                            showToast('无法访问麦克风', 'error');
+                            break;
+                        case 'not-allowed':
+                            showToast('麦克风权限被拒绝', 'error');
+                            break;
+                        case 'network':
+                            showToast('网络连接错误', 'error');
+                            break;
+                        default:
+                            showToast(`语音识别错误: ${event.error}`, 'error');
+                    }
+                };
+                
+                speechRecognition.onend = function() {
+                    if (isRecording && !isInterviewPaused) {
+                        try {
+                            speechRecognition.start();
+                        } catch(e) {
+                            console.log('重新启动识别失败:', e);
+                        }
+                    }
+                };
+                
+                showToast('语音识别已启动', 'success');
+                updateRecordingButton(true);
+            } catch (e) {
+                console.error('启动语音识别失败:', e);
+                showToast('启动语音识别失败', 'error');
+            }
+        }
+        
+        function stopContinuousRecording() {
+            if (speechRecognition) {
+                speechRecognition.stop();
+                speechRecognition = null;
+            }
+            
+            isRecording = false;
+            isSpeechRecognitionActive = false;
+            
+            document.getElementById('recordingIndicator')?.classList.remove('active');
+            document.getElementById('asrStatus').innerHTML = '<span class="recording-indicator"></span>🔇 录音已停止';
+            
+            showToast('语音识别已停止', 'success');
+            
+            updateRecordingButton(false);
+        }
+        
+        function updateRecordingButton(isRecording) {
+            const btnRow = document.getElementById('btnRow');
+            
+            if (isRecording) {
+                btnRow.innerHTML = '<button class="btn-stop-recording" id="stopRecordingBtn"><span class="recording-indicator active"></span>⏸️ 暂停回答</button>';
+                document.getElementById('stopRecordingBtn').addEventListener('click', function() {
+                    stopContinuousRecording();
+                });
+            } else {
+                btnRow.innerHTML = '<button class="btn-start-recording" id="startRecordingBtn">🎤 开始回答</button>';
+                document.getElementById('startRecordingBtn').addEventListener('click', function() {
+                    startContinuousRecording();
+                });
+            }
+        }
+        
+        function toggleRecording() {
+            if (isRecording) {
+                stopContinuousRecording();
+            } else {
+                startContinuousRecording();
+            }
+        }
+        
+        function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            
+            if (!answer) {
+                showToast('请先输入或录制您的回答', 'error');
+                return;
+            }
+            
+            if (isRecording) {
+                stopContinuousRecording();
+            }
+            
+            const submitBtn = document.getElementById('submitAnswerBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span>提交中...';
+            
+            fetch('/api/ai-interview/session/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'answer',
+                    session_id: sessionId,
+                    answer: answer
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error || '提交失败', 'error');
+                    return;
+                }
+                
+                if (data.interview_completed) {
+                    const completionMsg = data.completion_message || '感谢您参与本次AI面试，祝您生活顺利';
+                    
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;">
+                            <div style="background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); padding: 50px 60px; text-align: center; max-width: 500px;">
+                                <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
+                                <h2 style="font-size: 28px; color: #1e293b; margin-bottom: 15px;">面试已完成</h2>
+                                <p style="font-size: 16px; color: #64748b; line-height: 1.6; margin-bottom: 30px;">${completionMsg}</p>
+                                <button onclick="window.close()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 15px 50px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">👋 再见</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        const msg = '感谢您参与本次AI面试，祝您生活顺利';
+                        fetch('/api/ai-interview/speech/tts/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: msg })
+                        })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.audio_base64) {
+                                const blob = base64ToBlob(d.audio_base64, 'audio/wav');
+                                new Audio(URL.createObjectURL(blob)).play();
+                            }
+                        });
+                    }, 500);
+                    
+                    return;
+                }
+                
+                showToast('回答提交成功', 'success');
+                
+                if (data.question) {
+                    roundNumber = data.round || roundNumber;
+                    maxRounds = data.total_rounds || maxRounds;
+                    currentQuestion = data.question;
+                    
+                    document.getElementById('roundInfo').textContent = `第 ${roundNumber}/${maxRounds} 轮`;
+                    document.getElementById('questionNumber').textContent = `问题 ${roundNumber}`;
+                    document.getElementById('questionText').textContent = currentQuestion;
+                    document.getElementById('answerInput').value = '';
+                    
+                    setTimeout(() => {
+                        playQuestionAudio(currentQuestion);
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                showToast('网络错误: ' + error.message, 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✅ 提交回答';
+            });
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

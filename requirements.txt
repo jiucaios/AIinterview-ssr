@@ -1,0 +1,36 @@
+# AI面试模块依赖包
+# 版本号已记录，确保环境一致性
+# 最后更新：2026-05-15
+
+# Django Web框架
+Django>=4.2,<5.0
+
+# Django REST Framework
+djangorestframework>=3.14.0
+
+# 千问API SDK
+dashscope>=1.20.0
+
+# 环境变量管理
+python-dotenv>=1.0.0
+
+# NumPy（用于向量计算）
+numpy>=1.24.0
+
+# PDF解析
+pdfplumber>=0.10.0
+pypdfium2>=5.0.0
+
+# Word文档处理
+python-docx>=0.8.11
+
+# 图片处理
+Pillow>=10.0.0
+
+# OCR文字识别
+pytesseract>=0.3.10
+
+# 语音处理
+SpeechRecognition>=3.10.0
+pyaudio>=0.2.14
+wave>=0.0.2
