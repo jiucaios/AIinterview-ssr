@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>候选人管理 - AI面试系统</title>
+    <style>
+        :root {
+            --brand: #a5162a;
+            --brand-dark: #8f1022;
+            --brand-soft: #fff1f3;
+            --brand-border: #f2cdd3;
+            --text: #192333;
+            --muted: #6f7785;
+            --line: #dfe3e8;
+            --panel: #ffffff;
+            --canvas: #f5f6fa;
+            --sidebar: #fafbfe;
+            --success: #168a52;
+            --danger: #b42332;
+            --shadow: 0 8px 20px rgba(28, 36, 48, 0.06);
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 0;
+            background: var(--canvas);
+            color: var(--text);
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .app-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 60px;
+            background: linear-gradient(180deg, #af1a2e 0%, var(--brand-dark) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            box-shadow: 0 2px 10px rgba(114, 16, 29, 0.24);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.14);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            opacity: 0.78;
+            margin-top: 2px;
+        }
+
+        .topbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--brand-dark);
+            padding: 8px 14px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 224px minmax(0, 1fr);
+            min-height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #fff 0%, var(--sidebar) 100%);
+            border-right: 1px solid var(--line);
+            padding: 16px 14px 24px;
+        }
+
+        .nav-section-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 0 4px 14px;
+        }
+
+        .nav-menu {
+            display: grid;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 11px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-item strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--brand-soft);
+            border-color: var(--brand-border);
+            color: var(--brand-dark);
+        }
+
+        .main-content {
+            min-width: 0;
+            padding: 18px 20px 24px;
+            overflow: auto;
+        }
+
+        .page-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            line-height: 1.2;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .search-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .search-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .search-group input {
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #cfd5dd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-group input:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(165, 22, 42, 0.09);
+        }
+
+        .btn-search {
+            background: var(--brand);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-search:hover {
+            background: var(--brand-dark);
+        }
+
+        .candidate-list {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 1fr 200px 200px 150px;
+            padding: 12px 16px;
+            background: #f8f9fb;
+            border-bottom: 1px solid var(--line);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .list-item {
+            display: grid;
+            grid-template-columns: 1fr 200px 200px 150px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf0f3;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            align-items: center;
+        }
+
+        .list-item:hover {
+            background: #fafafa;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .candidate-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .candidate-email,
+        .candidate-phone,
+        .candidate-education {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .expand-icon {
+            margin-left: 8px;
+            font-size: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .list-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .expand-content {
+            display: none;
+            padding: 16px;
+            background: #fafbfe;
+            border-top: 1px solid var(--line);
+        }
+
+        .list-item.expanded + .expand-content {
+            display: block;
+        }
+
+        .expand-content h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--brand-dark);
+            margin-bottom: 12px;
+        }
+
+        .link-box {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .link-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        .btn-copy-link {
+            background: var(--brand-soft);
+            color: var(--brand-dark);
+            border: 1px solid var(--brand-border);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-copy-link:hover {
+            background: #ffe6ea;
+        }
+
+        .resume-preview {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .resume-preview h5 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .resume-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .resume-info-item {
+            font-size: 13px;
+            color: var(--text);
+            padding: 6px 10px;
+            background: #f8f9fb;
+            border-radius: 6px;
+        }
+
+        .resume-info-item span {
+            color: var(--muted);
+            margin-right: 6px;
+        }
+
+        .resume-summary {
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.5;
+            padding: 10px;
+            background: #f8f9fb;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .resume-preview {
+            position: relative;
+        }
+
+        .resume-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .resume-header h5 {
+            margin: 0;
+        }
+
+        .btn-edit {
+            background: var(--brand-soft);
+            color: var(--brand-dark);
+            border: 1px solid var(--brand-border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-edit:hover {
+            background: #ffe6ea;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-save:hover {
+            background: #147a48;
+        }
+
+        .btn-cancel {
+            background: #fff;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fb;
+        }
+
+        .resume-edit-form {
+            display: none;
+        }
+
+        .resume-edit-form.active {
+            display: block;
+        }
+
+        .resume-view-form.hidden {
+            display: none;
+        }
+
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .edit-form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .edit-form-item label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .edit-form-item input,
+        .edit-form-item textarea {
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .edit-form-item input:focus,
+        .edit-form-item textarea:focus {
+            outline: none;
+            border-color: var(--brand);
+        }
+
+        .edit-form-item textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .pagination-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .pagination-info strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination-btn {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--brand-soft);
+            border-color: var(--brand-border);
+            color: var(--brand-dark);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+        }
+
+        .pagination-input {
+            width: 50px;
+            height: 34px;
+            text-align: center;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 76px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+            .list-header,
+            .list-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .list-header {
+                display: none;
+            }
+            .list-item {
+                padding: 12px;
+            }
+            .list-item > div {
+                display: flex;
+                justify-content: space-between;
+            }
+            .list-item > div::before {
+                content: attr(data-label);
+                color: var(--muted);
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-topbar">
+        <div class="brand">
+            <div class="brand-mark">T</div>
+            <div>
+                <div class="brand-title">AI 面试管理台</div>
+                <div class="brand-subtitle">招聘运营中台</div>
+            </div>
+        </div>
+        <div class="topbar-controls">
+            <span class="user-pill">admin / superadmin</span>
+            <button type="button" class="logout-btn">退出</button>
+        </div>
+    </header>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="nav-section-label">工作台</div>
+            <nav class="nav-menu" aria-label="主导航">
+                <a class="nav-item" href="/api/ai-interview/hr/">
+                    <strong>生成面试</strong>
+                    <span>上传原始文件并生成 AI 面试</span>
+                </a>
+                <a class="nav-item active" href="/api/ai-interview/hr/candidates/">
+                    <strong>候选人管理</strong>
+                    <span>查看和管理所有候选人信息</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-toolbar">
+                <div>
+                    <h1 class="page-title">候选人管理</h1>
+                    <p class="page-subtitle">查看和管理所有候选人的面试信息</p>
+                </div>
+            </div>
+
+            <div class="search-panel">
+                <div class="search-row">
+                    <div class="search-group">
+                        <label>姓名</label>
+                        <input type="text" id="searchName" placeholder="请输入候选人姓名">
+                    </div>
+                    <div class="search-group">
+                        <label>手机号</label>
+                        <input type="text" id="searchPhone" placeholder="请输入手机号">
+                    </div>
+                    <div class="search-group">
+                        <label>邮箱</label>
+                        <input type="text" id="searchEmail" placeholder="请输入邮箱地址">
+                    </div>
+                    <button type="button" class="btn-search" onclick="searchCandidates()">搜索</button>
+                </div>
+            </div>
+
+            <div class="candidate-list" id="candidateList">
+                <div class="list-header">
+                    <div>姓名</div>
+                    <div>手机号</div>
+                    <div>邮箱</div>
+                    <div>最高学历</div>
+                </div>
+                <div id="candidateContainer">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <p>暂无候选人数据</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pagination-panel" id="paginationPanel" style="display: none;">
+                <div class="pagination-info">
+                    共 <strong id="totalCount">0</strong> 条记录，当前第 <strong id="currentPage">1</strong> / <strong id="totalPages">1</strong> 页
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="prevBtn" onclick="goToPage(currentPage - 1)" disabled>上一页</button>
+                    <span id="pageNumbers"></span>
+                    <button class="pagination-btn" id="nextBtn" onclick="goToPage(currentPage + 1)" disabled>下一页</button>
+                    <span style="margin-left: 8px; color: var(--muted); font-size: 13px;">跳转到</span>
+                    <input type="number" class="pagination-input" id="jumpPageInput" min="1" value="1" onkeydown="if(event.keyCode === 13) jumpToPage()">
+                    <button class="pagination-btn" onclick="jumpToPage()">确定</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let candidates = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalCount = 0;
+        let pageSize = 10;
+
+        async function loadCandidates(page = 1) {
+            try {
+                const response = await fetch(`/api/ai-interview/hr/candidates/list/?page=${page}&page_size=${pageSize}`);
+                const data = await response.json();
+                candidates = data.candidates || [];
+                currentPage = data.page || 1;
+                totalPages = data.total_pages || 1;
+                totalCount = data.count || 0;
+                renderCandidates(candidates);
+                updatePagination();
+            } catch (error) {
+                console.error('加载候选人数据失败:', error);
+            }
+        }
+
+        function searchCandidates() {
+            currentPage = 1;
+            loadCandidates(1);
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            loadCandidates(page);
+        }
+
+        function jumpToPage() {
+            const pageInput = document.getElementById('jumpPageInput');
+            const page = parseInt(pageInput.value);
+            if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                loadCandidates(page);
+            } else {
+                showToast('请输入有效的页码', 'error');
+                pageInput.value = currentPage;
+            }
+        }
+
+        function updatePagination() {
+            const paginationPanel = document.getElementById('paginationPanel');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageNumbers = document.getElementById('pageNumbers');
+
+            if (totalCount === 0) {
+                paginationPanel.style.display = 'none';
+                return;
+            }
+
+            paginationPanel.style.display = 'flex';
+
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('jumpPageInput').value = currentPage;
+
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+
+            let pageHtml = '';
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            if (startPage > 1) {
+                pageHtml += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) {
+                    pageHtml += `<span style="color: var(--muted); padding: 0 4px;">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pageHtml += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pageHtml += `<span style="color: var(--muted); padding: 0 4px;">...</span>`;
+                }
+                pageHtml += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            pageNumbers.innerHTML = pageHtml;
+        }
+
+        function renderCandidates(data) {
+            const container = document.getElementById('candidateContainer');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <p>暂无匹配的候选人</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map(candidate => `
+                <div class="list-item" onclick="toggleExpand('${candidate.candidate_id}')">
+                    <div data-label="姓名" class="candidate-name">${escapeHTML(candidate.name)} <span class="expand-icon">▼</span></div>
+                    <div data-label="手机号" class="candidate-phone">${escapeHTML(candidate.phone)}</div>
+                    <div data-label="邮箱" class="candidate-email">${escapeHTML(candidate.email || '-')}</div>
+                    <div data-label="学历" class="candidate-education">${escapeHTML(candidate.highest_education || '-')}</div>
+                </div>
+                <div class="expand-content" id="expand-${candidate.candidate_id}">
+                    <h4>面试详情</h4>
+                    <div class="link-box">
+                        <input type="text" value="${escapeHTML(candidate.interview_url || '-')}" readonly>
+                        <button class="btn-copy-link" onclick="event.stopPropagation(); copyLink('${candidate.interview_url}', '${candidate.candidate_id}')">复制链接</button>
+                    </div>
+                    <div class="resume-preview">
+                        <div class="resume-header">
+                            <h5>简历信息</h5>
+                            <div>
+                                <button class="btn-edit" onclick="event.stopPropagation(); enableEdit('${candidate.candidate_id}')">编辑</button>
+                                <button class="btn-save" id="save-btn-${candidate.candidate_id}" onclick="event.stopPropagation(); saveEdit('${candidate.candidate_id}')" style="display: none;">保存</button>
+                                <button class="btn-cancel" id="cancel-btn-${candidate.candidate_id}" onclick="event.stopPropagation(); cancelEdit('${candidate.candidate_id}')" style="display: none;">取消</button>
+                            </div>
+                        </div>
+                        <div class="resume-view-form" id="view-form-${candidate.candidate_id}">
+                            <div class="resume-info-grid">
+                                <div class="resume-info-item"><span>姓名</span>${escapeHTML(candidate.name)}</div>
+                                <div class="resume-info-item"><span>电话</span>${escapeHTML(candidate.phone)}</div>
+                                <div class="resume-info-item"><span>邮箱</span>${escapeHTML(candidate.email || '-')}</div>
+                                <div class="resume-info-item"><span>学历</span>${escapeHTML(candidate.highest_education || '-')}</div>
+                                <div class="resume-info-item"><span>工作年限</span>${escapeHTML(candidate.work_years || '-')}</div>
+                                <div class="resume-info-item"><span>岗位</span>${escapeHTML(candidate.job_name || '-')}</div>
+                            </div>
+                            ${candidate.summary ? `<div class="resume-summary"><span>个人简介</span><br>${escapeHTML(candidate.summary)}</div>` : ''}
+                        </div>
+                        <div class="resume-edit-form" id="edit-form-${candidate.candidate_id}">
+                            <div class="edit-form-grid">
+                                <div class="edit-form-item">
+                                    <label>姓名</label>
+                                    <input type="text" id="edit-name-${candidate.candidate_id}" value="${escapeHTML(candidate.name)}">
+                                </div>
+                                <div class="edit-form-item">
+                                    <label>电话</label>
+                                    <input type="text" id="edit-phone-${candidate.candidate_id}" value="${escapeHTML(candidate.phone)}">
+                                </div>
+                                <div class="edit-form-item">
+                                    <label>邮箱</label>
+                                    <input type="email" id="edit-email-${candidate.candidate_id}" value="${escapeHTML(candidate.email || '')}">
+                                </div>
+                                <div class="edit-form-item">
+                                    <label>学历</label>
+                                    <input type="text" id="edit-education-${candidate.candidate_id}" value="${escapeHTML(candidate.highest_education || '')}">
+                                </div>
+                                <div class="edit-form-item">
+                                    <label>工作年限</label>
+                                    <input type="text" id="edit-workyears-${candidate.candidate_id}" value="${escapeHTML(candidate.work_years || '')}">
+                                </div>
+                                <div class="edit-form-item">
+                                    <label>岗位</label>
+                                    <input type="text" id="edit-job-${candidate.candidate_id}" value="${escapeHTML(candidate.job_name || '')}">
+                                </div>
+                            </div>
+                            <div class="edit-form-item">
+                                <label>个人简介</label>
+                                <textarea id="edit-summary-${candidate.candidate_id}">${escapeHTML(candidate.summary || '')}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleExpand(id) {
+            const item = document.querySelector(`.list-item[data-candidate-id="${id}"]`) || document.querySelector(`.list-item:has(#expand-${id})`);
+            const expandContent = document.getElementById(`expand-${id}`);
+
+            if (item) {
+                item.classList.toggle('expanded');
+            }
+            if (expandContent) {
+                expandContent.style.display = expandContent.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        function copyLink(url, id) {
+            if (!url || url === '-') {
+                showToast('没有可复制的链接', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('链接已复制', 'success');
+            }).catch(() => {
+                showToast('复制失败', 'error');
+            });
+        }
+
+        function enableEdit(candidateId) {
+            const viewForm = document.getElementById(`view-form-${candidateId}`);
+            const editForm = document.getElementById(`edit-form-${candidateId}`);
+            const editBtn = document.querySelector(`button[onclick="event.stopPropagation(); enableEdit('${candidateId}')"]`);
+            const saveBtn = document.getElementById(`save-btn-${candidateId}`);
+            const cancelBtn = document.getElementById(`cancel-btn-${candidateId}`);
+
+            if (viewForm && editForm) {
+                viewForm.classList.add('hidden');
+                editForm.classList.add('active');
+                if (editBtn) editBtn.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'inline-block';
+                if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            }
+        }
+
+        function cancelEdit(candidateId) {
+            const viewForm = document.getElementById(`view-form-${candidateId}`);
+            const editForm = document.getElementById(`edit-form-${candidateId}`);
+            const editBtn = document.querySelector(`button[onclick="event.stopPropagation(); enableEdit('${candidateId}')"]`);
+            const saveBtn = document.getElementById(`save-btn-${candidateId}`);
+            const cancelBtn = document.getElementById(`cancel-btn-${candidateId}`);
+
+            if (viewForm && editForm) {
+                viewForm.classList.remove('hidden');
+                editForm.classList.remove('active');
+                if (editBtn) editBtn.style.display = 'inline-block';
+                if (saveBtn) saveBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
+            }
+        }
+
+        async function saveEdit(candidateId) {
+            const name = document.getElementById(`edit-name-${candidateId}`).value.trim();
+            const phone = document.getElementById(`edit-phone-${candidateId}`).value.trim();
+            const email = document.getElementById(`edit-email-${candidateId}`).value.trim();
+            const education = document.getElementById(`edit-education-${candidateId}`).value.trim();
+            const workYears = document.getElementById(`edit-workyears-${candidateId}`).value.trim();
+            const job = document.getElementById(`edit-job-${candidateId}`).value.trim();
+            const summary = document.getElementById(`edit-summary-${candidateId}`).value.trim();
+
+            const saveBtn = document.getElementById(`save-btn-${candidateId}`);
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+
+            try {
+                const response = await fetch('/api/ai-interview/hr/candidates/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        candidate_id: candidateId,
+                        name: name,
+                        phone: phone,
+                        email: email,
+                        highest_education: education,
+                        work_years: workYears,
+                        job_name: job,
+                        summary: summary
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('保存成功', 'success');
+
+                    const viewForm = document.getElementById(`view-form-${candidateId}`);
+                    const editForm = document.getElementById(`edit-form-${candidateId}`);
+                    const editBtn = document.querySelector(`button[onclick="event.stopPropagation(); enableEdit('${candidateId}')"]`);
+                    const cancelBtn = document.getElementById(`cancel-btn-${candidateId}`);
+
+                    if (viewForm && editForm) {
+                        viewForm.classList.remove('hidden');
+                        editForm.classList.remove('active');
+                        if (editBtn) editBtn.style.display = 'inline-block';
+                        if (cancelBtn) cancelBtn.style.display = 'none';
+                    }
+
+                    viewForm.querySelector('.resume-info-item:nth-child(1)').innerHTML = `<span>姓名</span>${escapeHTML(name)}`;
+                    viewForm.querySelector('.resume-info-item:nth-child(2)').innerHTML = `<span>电话</span>${escapeHTML(phone)}`;
+                    viewForm.querySelector('.resume-info-item:nth-child(3)').innerHTML = `<span>邮箱</span>${escapeHTML(email || '-')}`;
+                    viewForm.querySelector('.resume-info-item:nth-child(4)').innerHTML = `<span>学历</span>${escapeHTML(education || '-')}`;
+                    viewForm.querySelector('.resume-info-item:nth-child(5)').innerHTML = `<span>工作年限</span>${escapeHTML(workYears || '-')}`;
+                    viewForm.querySelector('.resume-info-item:nth-child(6)').innerHTML = `<span>岗位</span>${escapeHTML(job || '-')}`;
+
+                    const summaryDiv = viewForm.querySelector('.resume-summary');
+                    if (summary) {
+                        if (summaryDiv) {
+                            summaryDiv.innerHTML = `<span>个人简介</span><br>${escapeHTML(summary)}`;
+                        } else {
+                            const newSummary = document.createElement('div');
+                            newSummary.className = 'resume-summary';
+                            newSummary.innerHTML = `<span>个人简介</span><br>${escapeHTML(summary)}`;
+                            viewForm.appendChild(newSummary);
+                        }
+                    } else if (summaryDiv) {
+                        summaryDiv.remove();
+                    }
+
+                    loadCandidates(currentPage);
+                } else {
+                    showToast(data.error || '保存失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '保存';
+            }
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, char => {
+                const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return entities[char] || char;
+            });
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCandidates();
+
+            document.getElementById('searchName').addEventListener('keyup', debounce(searchCandidates, 300));
+            document.getElementById('searchPhone').addEventListener('keyup', debounce(searchCandidates, 300));
+            document.getElementById('searchEmail').addEventListener('keyup', debounce(searchCandidates, 300));
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>

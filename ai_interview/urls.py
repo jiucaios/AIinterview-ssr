@@ -4,7 +4,8 @@ from .views import (
     ResumeParserView, ResumeValidateView, VoiceTTSView, VoiceASRView,
     SpeechTTSView, SpeechASRView, HRDashboardView, CandidateEntryView,
     HRCreateJobView, JobInfoView, VerifyAndStartView, VerifyIdentityView,
-    InterviewView
+    InterviewView, CandidateManagementView, CandidateListView, CandidateUpdateView,
+    SendEmailView, SendEmailImageView, SendEmailAPIView
 )
 
 urlpatterns = [
@@ -23,6 +24,12 @@ urlpatterns = [
     
     path('hr/', HRDashboardView.as_view(), name='hr-dashboard'),
     path('hr/create-job/', HRCreateJobView.as_view(), name='hr-create-job'),
+    path('hr/candidates/', CandidateManagementView.as_view(), name='hr-candidates'),
+    path('hr/candidates/list/', CandidateListView.as_view(), name='hr-candidates-list'),
+    path('hr/candidates/update/', CandidateUpdateView.as_view(), name='hr-candidates-update'),
+    path('hr/send-email/', SendEmailView.as_view(), name='hr-send-email'),
+    path('hr/send-email/images/<str:filename>', SendEmailImageView.as_view(), name='hr-send-email-image'),
+    path('hr/send-email/api/', SendEmailAPIView.as_view(), name='hr-send-email-api'),
     path('create-job/', HRCreateJobView.as_view(), name='hr-create-job-short'),
     
     path('interview/entry/', CandidateEntryView.as_view(), name='candidate-entry'),

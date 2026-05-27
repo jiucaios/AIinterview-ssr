@@ -4,12 +4,13 @@ from datetime import timedelta
 
 
 class Candidate(models.Model):
-    """候选人模型 - 存储候选人姓名和手机号"""
+    """候选人模型 - 存储候选人姓名、手机号和邮箱"""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    candidate_id = models.CharField(max_length=128, unique=True, db_index=True, help_text='候选人唯一标识(姓名_手机号)')
+    candidate_id = models.CharField(max_length=128, unique=True, db_index=True, help_text='候选人唯一标识(姓名_邮箱)')
     name = models.CharField(max_length=64, help_text='候选人姓名')
-    phone = models.CharField(max_length=16, help_text='候选人手机号')
+    phone = models.CharField(max_length=16, null=True, blank=True, help_text='候选人手机号')
+    email = models.EmailField(max_length=128, default='', help_text='候选人邮箱')
     interview_id = models.CharField(max_length=32, null=True, blank=True, help_text='关联的面试ID')
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -20,7 +21,7 @@ class Candidate(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.candidate_id:
-            self.candidate_id = f"{self.name}_{self.phone}"
+            self.candidate_id = f"{self.name}_{self.email}"
         super().save(*args, **kwargs)
 
 

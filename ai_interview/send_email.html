@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发送邮件 - AI面试系统</title>
+    <style>
+        :root {
+            --brand: #a5162a;
+            --brand-dark: #8f1022;
+            --brand-soft: #fff3f5;
+            --text: #1f2933;
+            --muted: #6f7682;
+            --line: #dfe4ea;
+            --panel: #ffffff;
+            --canvas: #f3f5f8;
+            --success: #168a52;
+            --danger: #b42332;
+            --shadow: 0 10px 28px rgba(28, 36, 48, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--canvas);
+            color: var(--text);
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+        }
+
+        .app-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 60px;
+            background: linear-gradient(180deg, #af1a2e 0%, var(--brand-dark) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 22px;
+            box-shadow: 0 2px 10px rgba(114, 16, 29, 0.24);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.14);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            opacity: 0.78;
+            margin-top: 2px;
+        }
+
+        .main-content {
+            min-width: 0;
+            padding: 24px;
+        }
+
+        .email-workspace {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .email-form-panel,
+        .preview-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .email-form-panel {
+            padding: 24px;
+        }
+
+        .preview-panel {
+            overflow: hidden;
+        }
+
+        .panel-header {
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0 0 6px;
+        }
+
+        .panel-subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="url"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cfd5dd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text);
+            background: #fff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(165, 22, 42, 0.09);
+        }
+
+        .logo-hint {
+            margin: 2px 0 18px;
+            padding: 10px 12px;
+            background: var(--brand-soft);
+            border: 1px solid #f4ccd3;
+            border-radius: 8px;
+            color: #7c1423;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-send,
+        .btn-cancel {
+            height: 44px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-send {
+            background: var(--brand);
+            color: #fff;
+            border: none;
+            box-shadow: 0 6px 14px rgba(165, 22, 42, 0.18);
+        }
+
+        .btn-send:hover:not(:disabled) {
+            background: var(--brand-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(165, 22, 42, 0.22);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.62;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cancel {
+            background: #fff;
+            color: var(--text);
+            border: 1px solid var(--line);
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fb;
+        }
+
+        .preview-toolbar {
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            border-bottom: 1px solid var(--line);
+            background: #fbfcfe;
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .preview-subject {
+            color: var(--muted);
+            font-size: 12px;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 55%;
+        }
+
+        .mail-stage {
+            padding: 26px;
+            overflow-x: auto;
+            background: #eef1f4;
+        }
+
+        .mail-template {
+            width: 760px;
+            min-height: 560px;
+            margin: 0 auto;
+            background: #fff;
+            color: #111;
+            box-shadow: 0 12px 30px rgba(20, 28, 38, 0.12);
+            font-family: Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        }
+
+        .mail-hero {
+            height: 132px;
+            padding: 28px 34px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(180deg, #e7e7e7 0%, #ffffff 78%);
+        }
+
+        .mail-logo-box {
+            width: 76px;
+            height: 76px;
+            background: #fff;
+            border: 1px solid #eeeeee;
+            display: grid;
+            place-items: center;
+        }
+
+        .mail-logo-box img {
+            width: 76px;
+            height: 76px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .mail-logo-box.is-empty {
+            background: #fff;
+        }
+
+        .mail-brand {
+            color: #858585;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 0;
+            line-height: 1;
+            padding-top: 22px;
+        }
+
+        .mail-body {
+            width: 560px;
+            margin: 0 auto;
+            padding: 28px 0 22px;
+            font-size: 18px;
+            line-height: 2.1;
+        }
+
+        .mail-body p {
+            margin: 0 0 12px;
+        }
+
+        .mail-body .hello {
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .mail-body .indent {
+            text-indent: 2em;
+        }
+
+        .mail-body .link-label {
+            margin-top: 4px;
+        }
+
+        .interview-link {
+            display: inline-block;
+            max-width: 100%;
+            color: #1266cc;
+            font-weight: 700;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .mail-body .strong-note {
+            font-size: 19px;
+            line-height: 1.7;
+            font-weight: 800;
+            color: #000;
+            margin-top: 14px;
+        }
+
+        .mail-footer {
+            width: 600px;
+            margin: 0 auto;
+            padding: 28px 0 44px;
+            border-top: 1px solid #efefef;
+            text-align: center;
+        }
+
+        .mail-footer-logo {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 14px;
+            background: #fff;
+            border: 1px solid #eeeeee;
+            display: grid;
+            place-items: center;
+        }
+
+        .mail-footer-logo img {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .mail-footer-title {
+            font-size: 21px;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .mail-footer-links {
+            font-size: 15px;
+            color: #006fd6;
+        }
+
+        .mail-footer-links a {
+            color: #006fd6;
+            text-decoration: none;
+        }
+
+        .toast {
+            position: fixed;
+            top: 76px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .email-workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-subject {
+                max-width: 42%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-content {
+                padding: 16px;
+            }
+
+            .email-form-panel {
+                padding: 18px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .mail-stage {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-topbar">
+        <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+                <div class="brand-title">AI 面试管理台</div>
+                <div class="brand-subtitle">发送面试邀请邮件</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="email-workspace">
+            <section class="email-form-panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">发送面试邀请邮件</h1>
+                    <p class="panel-subtitle">填写候选人与面试链接，右侧会同步生成正式邮件样式。</p>
+                </div>
+
+                <form id="emailForm">
+                    <div class="form-group">
+                        <label for="emailTo">收件人邮箱 *</label>
+                        <input type="email" id="emailTo" placeholder="请输入候选人邮箱" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidateName">候选人姓名 *</label>
+                        <input type="text" id="candidateName" placeholder="请输入候选人姓名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobTitle">面试职位 *</label>
+                        <input type="text" id="jobTitle" placeholder="请输入面试职位" value="AI应用工程师" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailSubject">邮件主题 *</label>
+                        <input type="text" id="emailSubject" placeholder="请输入邮件主题" value="AI面试邀请" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="interviewUrl">面试链接 *</label>
+                        <input type="url" id="interviewUrl" placeholder="请输入面试链接" required>
+                    </div>
+
+                    <div class="logo-hint">Logo 读取路径：ai_interview/images/email-logo.jpg</div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn-cancel" id="cancelBtn">取消</button>
+                        <button type="submit" class="btn-send">发送邮件</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="preview-panel">
+                <div class="preview-toolbar">
+                    <div class="preview-title">邮件预览</div>
+                    <div class="preview-subject" id="previewSubject">AI面试邀请</div>
+                </div>
+
+                <div class="mail-stage">
+                    <article class="mail-template">
+                        <header class="mail-hero">
+                            <div class="mail-logo-box">
+                                <img src="./images/email-logo.jpg" alt="未来世界 Logo" onerror="handleLogoError(this)">
+                            </div>
+                            <div class="mail-brand">未来世界</div>
+                        </header>
+
+                        <section class="mail-body">
+                            <p class="hello"><span id="previewName">张新</span>，您好！</p>
+                            <p class="indent">感谢您投递我司<span id="previewJobTitle">AI应用工程师</span>职位，我们对您的简历印象深刻，现诚邀您参加AI面试</p>
+                            <p>请在收到邮件的三天内完成面试，完成AI面试后有机会进入下一阶段。</p>
+                            <p class="link-label">面试链接为：</p>
+                            <p><a class="interview-link" id="previewInterviewUrl" href="#" target="_blank" rel="noopener">请在左侧填写面试链接</a></p>
+                            <p class="strong-note">面试链接已绑定您的个人信息，请勿转发给他人！！！</p>
+                            <p>·如果您还有其他疑问，请联系您的专属HR或发送邮件至jiucaios@qq.com</p>
+                            <p>·若遇在面试中遇到技术问题，请致电17337075112以获得技术支持</p>
+                        </section>
+
+                        <footer class="mail-footer">
+                            <div class="mail-footer-logo">
+                                <img src="./images/email-logo.jpg" alt="未来世界 Logo" onerror="handleLogoError(this)">
+                            </div>
+                            <div class="mail-footer-title">成就个体，共创未来</div>
+                            <div class="mail-footer-links">
+                                <a href="#">隐私政策</a> · <a href="#">保留所有权利</a>
+                            </div>
+                        </footer>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function handleLogoError(image) {
+            image.style.display = 'none';
+            if (image.parentElement) {
+                image.parentElement.classList.add('is-empty');
+            }
+        }
+
+        function getFieldValue(id, fallback) {
+            const value = document.getElementById(id).value.trim();
+            return value || fallback;
+        }
+
+        function updatePreview() {
+            const name = getFieldValue('candidateName', '张新');
+            const jobTitle = getFieldValue('jobTitle', 'AI应用工程师');
+            const subject = getFieldValue('emailSubject', 'AI面试邀请');
+            const interviewUrl = getFieldValue('interviewUrl', '');
+
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewJobTitle').textContent = jobTitle;
+            document.getElementById('previewSubject').textContent = subject;
+
+            const link = document.getElementById('previewInterviewUrl');
+            if (interviewUrl) {
+                link.textContent = interviewUrl;
+                link.href = interviewUrl;
+            } else {
+                link.textContent = '请在左侧填写面试链接';
+                link.href = '#';
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+            const name = urlParams.get('name');
+            const interviewUrl = urlParams.get('interview_url');
+            const jobTitle = urlParams.get('job_title') || urlParams.get('position');
+
+            if (email) document.getElementById('emailTo').value = email;
+            if (name) document.getElementById('candidateName').value = name;
+            if (interviewUrl) document.getElementById('interviewUrl').value = interviewUrl;
+            if (jobTitle) document.getElementById('jobTitle').value = jobTitle;
+
+            updatePreview();
+
+            ['candidateName', 'emailTo', 'jobTitle', 'emailSubject', 'interviewUrl'].forEach((id) => {
+                document.getElementById(id).addEventListener('input', updatePreview);
+            });
+
+            document.getElementById('cancelBtn').addEventListener('click', function() {
+                if (window.opener) {
+                    window.close();
+                    return;
+                }
+                window.history.back();
+            });
+
+            document.getElementById('emailForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const emailTo = document.getElementById('emailTo').value.trim();
+                const candidateName = document.getElementById('candidateName').value.trim();
+                const jobTitle = document.getElementById('jobTitle').value.trim();
+                const subject = document.getElementById('emailSubject').value.trim();
+                const interviewUrl = document.getElementById('interviewUrl').value.trim();
+                const sendBtn = document.querySelector('.btn-send');
+
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<span class="loading-spinner"></span>发送中...';
+
+                try {
+                    const response = await fetch('/api/ai-interview/hr/send-email/api/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email_to: emailTo,
+                            candidate_name: candidateName,
+                            job_title: jobTitle,
+                            subject: subject,
+                            interview_url: interviewUrl
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showToast('邮件发送成功', 'success');
+                        setTimeout(() => {
+                            if (window.opener) {
+                                window.close();
+                            }
+                        }, 1600);
+                    } else {
+                        showToast(data.error || '发送失败', 'error');
+                    }
+                } catch (error) {
+                    showToast('网络错误，请稍后重试', 'error');
+                } finally {
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '发送邮件';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
