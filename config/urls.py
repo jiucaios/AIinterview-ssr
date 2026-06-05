@@ -1,23 +1,29 @@
 from django.urls import path, include
 from ai_interview.views import (
-    HRDashboardView, CandidateEntryView, TestToolView, InterviewView,
+    HRDashboardView, CandidateEntryView, CandidateWelcomeView, InterviewView,
+    HRLoginView, HRLogoutView,
     JobInfoView, VerifyAndStartView, VerifyIdentityView, HRCreateJobView,
+    ReleaseInterviewLockView,
     ResumeParserView, ResumeValidateView, VoiceTTSView, VoiceASRView,
-    SpeechTTSView, SpeechASRView, InterviewSessionView, InterviewSessionDetailView
+    SpeechTTSView, SpeechASRView, InterviewSessionView, InterviewSessionDetailView,
+    ExternalAISessionCreateView, ExternalAISessionReportView, ExternalAISessionTranscriptView
 )
 
 urlpatterns = [
     # 完整路径 - 主API入口
     path('api/ai-interview/', include('ai_interview.urls')),
+    path('api/external/ai-session/create', ExternalAISessionCreateView.as_view(), name='external-ai-session-create-no-slash-api'),
+    path('api/external/ai-session/create/', ExternalAISessionCreateView.as_view(), name='external-ai-session-create-api'),
+    path('api/external/ai-session/<str:external_session_id>/report/', ExternalAISessionReportView.as_view(), name='external-ai-session-report-api'),
+    path('api/external/ai-session/<str:external_session_id>/transcript/', ExternalAISessionTranscriptView.as_view(), name='external-ai-session-transcript-api'),
     
     # 简化路径 - HR管理页面
     path('hr/', HRDashboardView.as_view(), name='hr-dashboard-short'),
+    path('hr/login/', HRLoginView.as_view(), name='hr-login-short'),
+    path('hr/logout/', HRLogoutView.as_view(), name='hr-logout-short'),
     
     # 简化路径 - 候选人入口页面
     path('interview/', CandidateEntryView.as_view(), name='candidate-entry-short'),
-    
-    # 简化路径 - 测试页面
-    path('test/', TestToolView.as_view(), name='test-tool-short'),
     
     # 简化路径 - 面试对话页面（候选人验证后直接进入）
     path('start-interview/', InterviewView.as_view(), name='start-interview'),
@@ -29,14 +35,13 @@ urlpatterns = [
     path('api/resume/parse/', ResumeParserView.as_view(), name='resume-parser-api'),
     path('api/resume/validate/', ResumeValidateView.as_view(), name='resume-validate-api'),
     
-    # 测试页面API
-    path('api/test/', include('ai_interview.urls')),
-    
     # 候选人面试API
+    path('api/interview/welcome/', CandidateWelcomeView.as_view(), name='candidate-welcome-api'),
     path('api/interview/entry/', CandidateEntryView.as_view(), name='candidate-entry-api'),
     path('api/interview/job-info/', JobInfoView.as_view(), name='job-info-api'),
     path('api/interview/verify-and-start/', VerifyAndStartView.as_view(), name='verify-and-start-api'),
     path('api/interview/verify-identity/', VerifyIdentityView.as_view(), name='verify-identity-api'),
+    path('api/interview/release-lock/', ReleaseInterviewLockView.as_view(), name='release-interview-lock-api'),
     
     # 语音服务API
     path('api/ai-interview/voice/tts/', VoiceTTSView.as_view(), name='voice-tts-api'),

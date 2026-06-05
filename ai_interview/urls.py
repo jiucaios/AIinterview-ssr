@@ -1,44 +1,78 @@
 from django.urls import path
 from .views import (
-    InterviewSessionView, InterviewSessionDetailView, TestToolView,
+    InterviewSessionView, InterviewSessionDetailView,
     ResumeParserView, ResumeValidateView, VoiceTTSView, VoiceASRView,
-    SpeechTTSView, SpeechASRView, HRDashboardView, CandidateEntryView,
+    SpeechTTSView, SpeechASRView, HRDashboardView, CandidateEntryView, CandidateWelcomeView,
+    BatchInterviewView,
+    HRAuthContextView, HRLoginView, HRLogoutView,
+    HRUserManagementView, HRUserListCreateView, HRUserDetailView,
     HRCreateJobView, JobInfoView, VerifyAndStartView, VerifyIdentityView,
-    InterviewView, CandidateManagementView, CandidateListView, CandidateUpdateView,
-    SendEmailView, SendEmailImageView, SendEmailAPIView
+    ReleaseInterviewLockView,
+    InterviewView, CandidateManagementView, CandidateListView, CandidateUpdateView, CandidateDeleteView,
+    CandidateAssessmentGroupSwitchView,
+    CandidateInterviewReportView, CandidateInterviewReportDataView, CandidateInterviewReportAnalyzeView,
+    SendEmailView, SendEmailImageView, SendEmailAPIView,
+    ExternalAISessionCreateView, ExternalAISessionReportView, ExternalAISessionTranscriptView,
+    FeishuEventCallbackView
+)
+from .token_dashboard_views import (
+    TokenDashboardView, TokenDashboardDataView, TokenDashboardClearView
 )
 
 urlpatterns = [
-    path('', TestToolView.as_view(), name='test-tool-root'),
-    
+    path('external/ai-session/create', ExternalAISessionCreateView.as_view(), name='external-ai-session-create-no-slash'),
+    path('external/ai-session/create/', ExternalAISessionCreateView.as_view(), name='external-ai-session-create'),
+    path('external/ai-session/<str:external_session_id>/report/', ExternalAISessionReportView.as_view(), name='external-ai-session-report'),
+    path('external/ai-session/<str:external_session_id>/transcript/', ExternalAISessionTranscriptView.as_view(), name='external-ai-session-transcript'),
+    path('feishu/events', FeishuEventCallbackView.as_view(), name='feishu-events-no-slash'),
+    path('feishu/events/', FeishuEventCallbackView.as_view(), name='feishu-events'),
+
     path('interview/', InterviewView.as_view(), name='interview'),
     path('session/', InterviewSessionView.as_view(), name='interview-session'),
     path('session/<str:session_id>/', InterviewSessionDetailView.as_view(), name='interview-session-detail'),
-    path('test/', TestToolView.as_view(), name='test-tool'),
     path('resume/parse/', ResumeParserView.as_view(), name='resume-parser'),
     path('resume/validate/', ResumeValidateView.as_view(), name='resume-validate'),
     path('voice/tts/', VoiceTTSView.as_view(), name='voice-tts'),
     path('voice/asr/', VoiceASRView.as_view(), name='voice-asr'),
     path('speech/tts/', SpeechTTSView.as_view(), name='speech-tts'),
     path('speech/asr/', SpeechASRView.as_view(), name='speech-asr'),
-    
+
     path('hr/', HRDashboardView.as_view(), name='hr-dashboard'),
+    path('hr/auth-context/', HRAuthContextView.as_view(), name='hr-auth-context'),
+    path('hr/login/', HRLoginView.as_view(), name='hr-login'),
+    path('hr/logout/', HRLogoutView.as_view(), name='hr-logout'),
+    path('hr/batch/', BatchInterviewView.as_view(), name='hr-batch'),
     path('hr/create-job/', HRCreateJobView.as_view(), name='hr-create-job'),
+    path('hr/users/', HRUserManagementView.as_view(), name='hr-users'),
+    path('hr/users/api/', HRUserListCreateView.as_view(), name='hr-users-api'),
+    path('hr/users/api/<uuid:user_id>/', HRUserDetailView.as_view(), name='hr-users-detail-api'),
     path('hr/candidates/', CandidateManagementView.as_view(), name='hr-candidates'),
     path('hr/candidates/list/', CandidateListView.as_view(), name='hr-candidates-list'),
     path('hr/candidates/update/', CandidateUpdateView.as_view(), name='hr-candidates-update'),
+    path('hr/candidates/delete/', CandidateDeleteView.as_view(), name='hr-candidates-delete'),
+    path('hr/candidates/assessment-group/switch/', CandidateAssessmentGroupSwitchView.as_view(), name='hr-candidates-assessment-group-switch'),
+    path('hr/candidates/interview-report/', CandidateInterviewReportView.as_view(), name='hr-candidates-interview-report'),
+    path('hr/candidates/interview-report/data/', CandidateInterviewReportDataView.as_view(), name='hr-candidates-interview-report-data'),
+    path('hr/candidates/interview-report/analyze/', CandidateInterviewReportAnalyzeView.as_view(), name='hr-candidates-interview-report-analyze'),
     path('hr/send-email/', SendEmailView.as_view(), name='hr-send-email'),
     path('hr/send-email/images/<str:filename>', SendEmailImageView.as_view(), name='hr-send-email-image'),
     path('hr/send-email/api/', SendEmailAPIView.as_view(), name='hr-send-email-api'),
+    path('hr/token-dashboard/', TokenDashboardView.as_view(), name='hr-token-dashboard'),
+    path('hr/token-dashboard/data/', TokenDashboardDataView.as_view(), name='hr-token-dashboard-data'),
+    path('hr/token-dashboard/clear/', TokenDashboardClearView.as_view(), name='hr-token-dashboard-clear'),
     path('create-job/', HRCreateJobView.as_view(), name='hr-create-job-short'),
-    
+
+    path('interview/welcome/', CandidateWelcomeView.as_view(), name='candidate-welcome'),
     path('interview/entry/', CandidateEntryView.as_view(), name='candidate-entry'),
     path('interview/job-info/', JobInfoView.as_view(), name='job-info'),
     path('interview/verify-and-start/', VerifyAndStartView.as_view(), name='verify-and-start'),
     path('interview/verify-identity/', VerifyIdentityView.as_view(), name='verify-identity'),
-    
+    path('interview/release-lock/', ReleaseInterviewLockView.as_view(), name='release-interview-lock'),
+
+    path('welcome/', CandidateWelcomeView.as_view(), name='candidate-welcome-short'),
     path('entry/', CandidateEntryView.as_view(), name='candidate-entry-short'),
     path('job-info/', JobInfoView.as_view(), name='job-info-short'),
     path('verify-and-start/', VerifyAndStartView.as_view(), name='verify-and-start-short'),
     path('verify-identity/', VerifyIdentityView.as_view(), name='verify-identity-short'),
+    path('release-lock/', ReleaseInterviewLockView.as_view(), name='release-interview-lock-short'),
 ]

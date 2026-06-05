@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试问答报告 - 未来世界</title>
+    <style>
+        :root {
+            --ink: #17182b;
+            --muted: #7a8498;
+            --line: #e6eaf2;
+            --panel: #ffffff;
+            --brand: #7c5cff;
+            --success: #16b66d;
+            --warning: #f59e0b;
+            --danger: #ef466f;
+            --canvas: #f4f6fb;
+            --shadow: 0 18px 48px rgba(28, 25, 72, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--canvas);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        .topbar {
+            height: 64px;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .topbar-inner {
+            width: min(1120px, calc(100% - 40px));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .brand img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .shell {
+            width: min(1120px, calc(100% - 40px));
+            margin: 28px auto 46px;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #171451 0%, #151341 52%, #10101f 100%);
+            color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 18px;
+        }
+
+        .summary h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+            line-height: 1.2;
+        }
+
+        .summary-meta {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            color: rgba(255, 255, 255, 0.74);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .report-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .qa-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .qa-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .round-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 0 12px;
+            border-radius: 999px;
+            color: var(--brand);
+            background: #f0edff;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .score {
+            min-width: 70px;
+            text-align: center;
+            color: #fff;
+            background: var(--success);
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .score.mid {
+            background: var(--warning);
+        }
+
+        .score.low {
+            background: var(--danger);
+        }
+
+        .qa-section {
+            margin-top: 12px;
+        }
+
+        .qa-section h3 {
+            margin: 0 0 8px;
+            color: #4d5568;
+            font-size: 14px;
+        }
+
+        .qa-section p {
+            margin: 0;
+            color: #1f2437;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .quality {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #f8f9fc;
+            border: 1px solid var(--line);
+            color: #4d5568;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .quality-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            color: #252b3d;
+            font-weight: 900;
+        }
+
+        .quality-reason {
+            margin: 0 0 12px;
+            color: #31384d;
+            white-space: pre-wrap;
+        }
+
+        .dimension-list {
+            display: grid;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .dimension-item {
+            display: grid;
+            grid-template-columns: 110px 1fr 48px;
+            gap: 10px;
+            align-items: start;
+            padding: 10px;
+            border: 1px solid #e8ecf5;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .dimension-name {
+            color: #252b3d;
+            font-weight: 800;
+        }
+
+        .dimension-comment {
+            color: #5c6578;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .dimension-score {
+            text-align: right;
+            color: var(--brand);
+            font-weight: 900;
+        }
+
+        .quality-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .quality-box {
+            padding: 10px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #e8ecf5;
+            min-width: 0;
+        }
+
+        .quality-box strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #252b3d;
+        }
+
+        .quality-box ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .quality-box li {
+            margin: 4px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .quality-suggestion {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #e8ecf5;
+            overflow-wrap: anywhere;
+        }
+
+        .analysis-summary {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .analysis-summary h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .analysis-summary p {
+            margin: 0;
+            color: #31384d;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .analysis-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        @media (max-width: 720px) {
+            .dimension-item {
+                grid-template-columns: 1fr auto;
+            }
+
+            .dimension-comment {
+                grid-column: 1 / -1;
+            }
+
+            .quality-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .empty,
+        .loading {
+            padding: 42px;
+            text-align: center;
+            color: var(--muted);
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <img src="/api/ai-interview/hr/send-email/images/email-logo.jpg" alt="未来世界 Logo" onerror="this.style.display='none'">
+                <span>未来世界</span>
+            </div>
+            <strong>面试问答报告</strong>
+        </div>
+    </header>
+
+    <main class="shell">
+        <section class="summary">
+            <h1 id="candidateName">候选人面试报告</h1>
+            <div class="summary-meta">
+                <span id="completedStatus">完成状态：-</span>
+                <span id="confidenceScore">综合可信度：-</span>
+                <span id="updatedAt">更新时间：-</span>
+            </div>
+        </section>
+        <section id="reportList" class="report-list">
+            <div class="loading">正在加载面试问答记录...</div>
+        </section>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const candidateId = params.get('candidate_id') || '';
+        const configId = params.get('config_id') || '';
+
+        function escapeHTML(value) {
+            if (!value) return '';
+            return String(value).replace(/[&<>"']/g, char => {
+                const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return entities[char] || char;
+            });
+        }
+
+        function scoreClass(score) {
+            if (score < 60) return 'low';
+            if (score < 80) return 'mid';
+            return '';
+        }
+
+        function formatDate(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+        }
+
+        function renderList(items, fallback) {
+            const values = Array.isArray(items) ? items.filter(Boolean) : [];
+            if (!values.length) return `<span>${escapeHTML(fallback)}</span>`;
+            return `<ul>${values.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul>`;
+        }
+
+        function renderDimensions(dimensions) {
+            const values = Array.isArray(dimensions) ? dimensions : [];
+            if (!values.length) return '';
+            return `
+                <div class="dimension-list">
+                    ${values.map(item => `
+                        <div class="dimension-item">
+                            <div class="dimension-name">${escapeHTML(item.name || '-')}</div>
+                            <div class="dimension-comment">${escapeHTML(item.comment || '-')}</div>
+                            <div class="dimension-score">${escapeHTML(item.score ?? '-')}分</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderQuality(quality, score) {
+            if (!quality || !Object.keys(quality).length) return '';
+            const issues = quality.issues && quality.issues.length ? quality.issues : quality.risks;
+            return `
+                <div class="quality">
+                    <div class="quality-title">
+                        <span>问答质量分析</span>
+                        <span>${escapeHTML(quality.valid === false ? '需关注' : '有效回答')}</span>
+                    </div>
+                    <p class="quality-reason">${escapeHTML(quality.reason || '-')}</p>
+                    ${renderDimensions(quality.dimensions)}
+                    <div class="quality-columns">
+                        <div class="quality-box">
+                            <strong>回答优势</strong>
+                            ${renderList(quality.strengths, '暂无明显优势')}
+                        </div>
+                        <div class="quality-box">
+                            <strong>风险与不足</strong>
+                            ${renderList(issues, score < 60 ? '回答质量不足' : '无明显问题')}
+                        </div>
+                    </div>
+                    <div class="quality-suggestion">
+                        <strong>追问建议：</strong>${escapeHTML(quality.suggestion || '暂无')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDiscussionAnalysis(analysis) {
+            if (!analysis || !Object.keys(analysis).length) return '';
+            const score = Number(analysis.score || 0);
+            return `
+                <article class="analysis-summary">
+                    <div class="qa-head">
+                        <h2>面谈分析结论</h2>
+                        <span class="score ${scoreClass(score)}">${escapeHTML(analysis.score_text || `${score}分`)}</span>
+                    </div>
+                    <div class="analysis-meta">
+                        <span class="round-badge">${escapeHTML(analysis.decision || '信息不足')}</span>
+                        <span class="round-badge">${escapeHTML(analysis.model || 'qwen-plus')}</span>
+                    </div>
+                    <p>${escapeHTML(analysis.summary || '-')}</p>
+                    ${renderDimensions(analysis.dimensions)}
+                    <div class="quality-columns">
+                        <div class="quality-box">
+                            <strong>匹配优势</strong>
+                            ${renderList(analysis.strengths, '暂无明显优势')}
+                        </div>
+                        <div class="quality-box">
+                            <strong>风险与不足</strong>
+                            ${renderList(analysis.risks, '无明显问题')}
+                        </div>
+                    </div>
+                    <div class="quality-suggestion">
+                        <strong>HR建议：</strong>${escapeHTML(analysis.suggestion || '暂无')}
+                    </div>
+                </article>
+            `;
+        }
+
+        async function loadReport() {
+            const reportList = document.getElementById('reportList');
+            if (!candidateId) {
+                reportList.innerHTML = '<div class="empty">缺少候选人参数</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/ai-interview/hr/candidates/interview-report/data/?candidate_id=${encodeURIComponent(candidateId)}&config_id=${encodeURIComponent(configId)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    reportList.innerHTML = `<div class="empty">${escapeHTML(data.error || '加载失败')}</div>`;
+                    return;
+                }
+
+                const discussionAnalysis = data.discussion_analysis || null;
+                const qaOnly = Boolean(data.qa_only) && !discussionAnalysis;
+                const typeLabel = data.interview_type_label || '面试';
+                document.getElementById('candidateName').textContent = `${data.candidate_name || candidateId} 的${typeLabel}报告`;
+                document.getElementById('completedStatus').textContent = `完成状态：${data.interview_completed ? '已完成' : '未完成'}`;
+                document.getElementById('confidenceScore').textContent = qaOnly ? '报告类型：仅问答记录' : `综合评分：${Math.round((data.confidence_score || 0) * 100)}分`;
+                document.getElementById('updatedAt').textContent = `更新时间：${formatDate(data.updated_at)}`;
+
+                const records = data.qa_records || [];
+                if (!records.length) {
+                    reportList.innerHTML = '<div class="empty">暂无问答记录</div>';
+                    return;
+                }
+
+                const qaHtml = records.map(record => {
+                    const quality = record.quality || {};
+                    const score = Number(record.score || 0);
+                    return `
+                        <article class="qa-card">
+                            <div class="qa-head">
+                                <span class="round-badge">${qaOnly ? '问题' : `第 ${escapeHTML(record.round)} 轮`}</span>
+                                ${qaOnly ? '' : `<span class="score ${scoreClass(score)}">${escapeHTML(record.score_text || `${score}分`)}</span>`}
+                            </div>
+                            <div class="qa-section">
+                                <h3>提问</h3>
+                                <p>${escapeHTML(record.question || '-')}</p>
+                            </div>
+                            <div class="qa-section">
+                                <h3>回答</h3>
+                                <p>${escapeHTML(record.answer || '-')}</p>
+                            </div>
+                            ${qaOnly ? '' : renderQuality(quality, score)}
+                        </article>
+                    `;
+                }).join('');
+                reportList.innerHTML = `${renderDiscussionAnalysis(discussionAnalysis)}${qaHtml}`;
+            } catch (error) {
+                reportList.innerHTML = '<div class="empty">网络错误，加载失败</div>';
+            }
+        }
+
+        loadReport();
+    </script>
+</body>
+</html>

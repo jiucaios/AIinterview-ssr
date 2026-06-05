@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR 用户管理</title>
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --brand: #a5162a;
+            --brand-dark: #8f1022;
+            --brand-soft: #fff1f3;
+            --brand-border: #f2cdd3;
+            --text: #192333;
+            --muted: #6f7785;
+            --line: #dfe3e8;
+            --panel: #ffffff;
+            --canvas: #f5f6fa;
+            --sidebar: #fafbfe;
+            --success: #168a52;
+            --danger: #b42332;
+            --shadow: 0 8px 20px rgba(28, 36, 48, 0.06);
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--canvas);
+            color: var(--text);
+            font: 14px/1.5 Arial, "Microsoft YaHei", sans-serif;
+        }
+        .app-topbar {
+            height: 60px;
+            background: linear-gradient(180deg, #af1a2e 0%, var(--brand-dark) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            box-shadow: 0 2px 10px rgba(114, 16, 29, 0.24);
+        }
+        .brand-title { font-size: 15px; font-weight: 800; }
+        .brand-subtitle { font-size: 11px; opacity: 0.78; }
+        .logout-btn {
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--brand-dark);
+            padding: 8px 14px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .app-shell {
+            display: grid;
+            grid-template-columns: 224px minmax(0, 1fr);
+            min-height: calc(100vh - 60px);
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #fff 0%, var(--sidebar) 100%);
+            border-right: 1px solid var(--line);
+            padding: 16px 14px 24px;
+        }
+        .nav-section-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 0 4px 14px;
+        }
+        .nav-menu { display: grid; gap: 8px; }
+        .nav-item {
+            display: block;
+            padding: 11px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+        .nav-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+        .nav-item span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+        .nav-item:hover, .nav-item.active {
+            background: var(--brand-soft);
+            border-color: var(--brand-border);
+            color: var(--brand-dark);
+        }
+        .main-content { min-width: 0; padding: 18px 20px 24px; overflow: auto; }
+        .page-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+        .page-title { font-size: 20px; line-height: 1.2; font-weight: 800; margin: 0 0 6px; }
+        .page-subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+        .panel h2 {
+            margin: 0 0 16px;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        input {
+            width: 100%;
+            height: 38px;
+            padding: 0 10px;
+            border: 1px solid #c8d2dd;
+            border-radius: 6px;
+            font: inherit;
+        }
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .check-row input { width: 16px; height: 16px; }
+        .btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 9px 14px;
+            color: #fff;
+            background: var(--brand);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .btn.secondary { background: #526071; }
+        .btn.danger { background: var(--danger); }
+        .btn.small { padding: 7px 10px; font-size: 12px; }
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: middle;
+        }
+        th { color: var(--muted); font-size: 12px; background: #f8f9fb; }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .status.active { color: var(--success); background: #edf9f2; }
+        .status.inactive { color: var(--danger); background: #fff0f0; }
+        .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .toast {
+            display: none;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: #fff;
+            background: var(--success);
+        }
+        .toast.error { background: var(--danger); }
+        @media (max-width: 900px) {
+            .app-shell { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-topbar">
+        <div>
+            <div class="brand-title">AI 面试管理台</div>
+            <div class="brand-subtitle">招聘运营中台</div>
+        </div>
+        <button type="button" class="logout-btn" onclick="location.href='/api/ai-interview/hr/logout/'">退出</button>
+    </header>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="nav-section-label">工作台</div>
+            <nav class="nav-menu" aria-label="主导航">
+                <a class="nav-item" href="/api/ai-interview/hr/">
+                    <strong>生成面试</strong>
+                    <span>上传原始文件并生成 AI 面试</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/batch/">
+                    <strong>批量生成面试</strong>
+                    <span>多份简历逐一解析并生成链接</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/candidates/">
+                    <strong>候选人管理</strong>
+                    <span>查看和管理所有候选人信息</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/token-dashboard/" data-admin-only style="display: none;">
+                    <strong>词元计算台</strong>
+                    <span>追踪 AI 服务 Token 消耗</span>
+                </a>
+                <a class="nav-item active" href="/api/ai-interview/hr/users/">
+                    <strong>HR 用户管理</strong>
+                    <span>维护可登录 HR 工作台的用户</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-toolbar">
+                <div>
+                    <h1 class="page-title">HR 用户管理</h1>
+                    <p class="page-subtitle">新增、编辑、启用、停用或删除 HR 登录账号。</p>
+                </div>
+                <button class="btn secondary" type="button" onclick="loadUsers()">刷新</button>
+            </div>
+
+            <div id="toast" class="toast"></div>
+
+            <div class="layout">
+                <section class="panel">
+                    <h2 id="formTitle">新增 HR 用户</h2>
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        <label for="username">账号</label>
+                        <input id="username" required autocomplete="off">
+                        <label for="password">密码</label>
+                        <input id="password" type="password" autocomplete="new-password">
+                        <label for="name">姓名</label>
+                        <input id="name" autocomplete="off">
+                        <label for="email">邮箱</label>
+                        <input id="email" type="email" autocomplete="off">
+                        <label for="phone">手机号</label>
+                        <input id="phone" autocomplete="off">
+                        <label class="check-row">
+                            <input id="isActive" type="checkbox" checked>
+                            启用账号
+                        </label>
+                        <div class="form-actions">
+                            <button class="btn" type="submit">保存</button>
+                            <button class="btn secondary" type="button" onclick="resetForm()">清空</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <h2>HR 用户列表</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>账号</th>
+                                <th>姓名</th>
+                                <th>邮箱</th>
+                                <th>手机号</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userRows"></tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let users = [];
+        const pageToken = new URLSearchParams(window.location.search).get('token') || '';
+
+        function apiUrl(path) {
+            if (!pageToken) return path;
+            const separator = path.includes('?') ? '&' : '?';
+            return `${path}${separator}token=${encodeURIComponent(pageToken)}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2600);
+        }
+
+        async function loadUsers() {
+            const response = await fetch(apiUrl('/api/ai-interview/hr/users/api/'));
+            const data = await response.json();
+            if (!response.ok) {
+                showToast(data.error || '加载失败', 'error');
+                return;
+            }
+            users = data.users || [];
+            renderUsers();
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('userRows');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${escapeHtml(user.username)}</td>
+                    <td>${escapeHtml(user.name || '-')}</td>
+                    <td>${escapeHtml(user.email || '-')}</td>
+                    <td>${escapeHtml(user.phone || '-')}</td>
+                    <td><span class="status ${user.is_active ? 'active' : 'inactive'}">${user.is_active ? '启用' : '停用'}</span></td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="btn small secondary" type="button" onclick="editUser('${user.id}')">编辑</button>
+                            <button class="btn small danger" type="button" onclick="deleteUser('${user.id}')">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editUser(id) {
+            const user = users.find(item => item.id === id);
+            if (!user) return;
+            document.getElementById('formTitle').textContent = '编辑 HR 用户';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('password').value = '';
+            document.getElementById('password').placeholder = '留空则不修改密码';
+            document.getElementById('name').value = user.name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('isActive').checked = !!user.is_active;
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').textContent = '新增 HR 用户';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('password').placeholder = '';
+            document.getElementById('isActive').checked = true;
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('确认删除该 HR 用户？')) return;
+            const response = await fetch(apiUrl(`/api/ai-interview/hr/users/api/${id}/`), { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) {
+                showToast(data.error || '删除失败', 'error');
+                return;
+            }
+            showToast('删除成功');
+            await loadUsers();
+        }
+
+        document.getElementById('userForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            const id = document.getElementById('userId').value;
+            const payload = {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value,
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                is_active: document.getElementById('isActive').checked
+            };
+            if (id && !payload.password) {
+                delete payload.password;
+            }
+            const response = await fetch(apiUrl(id ? `/api/ai-interview/hr/users/api/${id}/` : '/api/ai-interview/hr/users/api/'), {
+                method: id ? 'PATCH' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                showToast(data.error || '保存失败', 'error');
+                return;
+            }
+            showToast(id ? '更新成功' : '创建成功');
+            resetForm();
+            await loadUsers();
+        });
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        async function applyAdminWorkspaceVisibility() {
+            try {
+                const response = await fetch(apiUrl('/api/ai-interview/hr/auth-context/'));
+                const data = await response.json();
+                if (response.ok && data.can_manage_hr_users) {
+                    document.querySelectorAll('[data-admin-only]').forEach(item => {
+                        item.style.display = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载权限信息失败:', error);
+            }
+        }
+
+        loadUsers();
+        applyAdminWorkspaceVisibility();
+    </script>
+</body>
+</html>

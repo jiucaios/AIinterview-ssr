@@ -1,69 +1,65 @@
-# 虚拟环境
-venv/
-.env/
-.venv/
-.env.local/
-
-# 敏感配置文件
-.env
-.env.local
-.env.production
-
-# Django数据库
-*.sqlite3
-db.sqlite3
-
-# Python缓存
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
 
-# 日志文件
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Django / local runtime
+db.sqlite3
+*.sqlite3
+*.sqlite3-journal
 logs/
 *.log
-*.log.*
+external_resumes/
+media/
+staticfiles/
 
-# 临时文件
+# Environment and secrets
+.env
+.env.*
+!.env.example
+certs/
+*.pem
+*.key
+*.crt
+
+# Temporary / generated artifacts
+tmp/
+tmp_*/
+tmp-*/
+tmp_packages/
+tmp_numpy/
+tmp_docx_render/
 *.tmp
 *.temp
-tmp/
-
-# 测试文件
-test_*.py
-debug_*.py
-*_test.py
-*_test.bat
-
-# 测试输出文件
-*.txt
-!requirements.txt
-
-# 编辑器配置
-.vscode/
-.idea/
+*.bak
 *.swp
 *.swo
 *~
 
-# OS文件
-.DS_Store
-Thumbs.db
-
-# 构建产物
+# Build artifacts
 build/
 dist/
 *.egg-info/
 
-# Docker
-docker-compose.override.yml
-# Environment files and local virtual environments
-.env
-.env.*
-!.env.example
-.env/
-env/
-venv/
-.venv/
-python-*.exe
+# Local helper scripts
+activate_venv.bat
+activate_venv.ps1
+
+# Local generated documents
+AI面试服务接口对齐文档-供对方调用版.docx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

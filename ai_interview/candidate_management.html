@@ -21,6 +21,12 @@
             --shadow: 0 8px 20px rgba(28, 36, 48, 0.06);
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             min-height: 100vh;
             padding: 0;
@@ -174,13 +180,54 @@
             font-size: 13px;
         }
 
-        .search-panel {
+        .container {
+            max-width: none;
+            margin: 0;
+            height: calc(100vh - 152px);
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+        }
+
+        .form-panel {
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+            min-width: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .search-panel {
             padding: 16px;
             margin-bottom: 16px;
-            box-shadow: var(--shadow);
+        }
+
+        .type-tabs {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            margin-bottom: 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .type-tab {
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            padding: 8px 14px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .type-tab.active {
+            background: var(--brand-soft);
+            color: var(--brand-dark);
         }
 
         .search-row {
@@ -243,7 +290,7 @@
 
         .list-header {
             display: grid;
-            grid-template-columns: 1fr 200px 200px 150px;
+            grid-template-columns: minmax(160px, 1fr) 120px 100px 82px 82px 82px 210px 140px 82px 68px;
             padding: 12px 16px;
             background: #f8f9fb;
             border-bottom: 1px solid var(--line);
@@ -254,7 +301,7 @@
 
         .list-item {
             display: grid;
-            grid-template-columns: 1fr 200px 200px 150px;
+            grid-template-columns: minmax(160px, 1fr) 120px 100px 82px 82px 82px 210px 140px 82px 68px;
             padding: 14px 16px;
             border-bottom: 1px solid #edf0f3;
             cursor: pointer;
@@ -276,10 +323,157 @@
         }
 
         .candidate-email,
+        .candidate-creator,
         .candidate-phone,
-        .candidate-education {
+        .candidate-status,
+        .candidate-match,
+        .candidate-position-match,
+        .candidate-assessment-group,
+        .candidate-education,
+        .candidate-actions {
             color: var(--muted);
             font-size: 13px;
+        }
+
+        .candidate-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .candidate-creator {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .phone-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mini-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 2px 7px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eef1f5;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .mini-pill.done {
+            background: #edf9f2;
+            color: var(--success);
+        }
+
+        .mini-pill.match {
+            background: var(--brand-soft);
+            color: var(--brand-dark);
+        }
+
+        .mini-pill.match.failed {
+            background: #fff0f0;
+            color: var(--danger);
+        }
+
+        .score-ring {
+            --score: 0;
+            --score-color: var(--success);
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-grid;
+            place-items: center;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 900;
+            background:
+                radial-gradient(circle at center, #fff 0 57%, transparent 58%),
+                conic-gradient(from -90deg, var(--score-color) calc(var(--score) * 1%), #e4e9f0 0);
+            box-shadow:
+                0 0 0 1px rgba(25, 35, 51, 0.06),
+                inset 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+
+        .score-ring::before {
+            content: "";
+            position: absolute;
+            inset: 5px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
+            pointer-events: none;
+        }
+
+        .score-ring > span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .score-ring.pending {
+            --score-color: #a7b0bf;
+            color: var(--muted);
+            background:
+                radial-gradient(circle at center, #fff 0 57%, transparent 58%),
+                conic-gradient(#d9dee7 100%, #d9dee7 0);
+        }
+
+        .score-ring.gold {
+            --score-color: #d4a017;
+        }
+
+        .score-ring.low {
+            --score-color: var(--danger);
+        }
+
+        .assessment-select {
+            width: 140px;
+            max-width: 100%;
+            height: 28px;
+            border: 1px solid #cfd5dd;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text);
+            padding: 0 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 0;
+            white-space: nowrap;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-align: center;
+            text-align-last: center;
+        }
+
+        .assessment-select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(165, 22, 42, 0.08);
+        }
+
+        .btn-delete {
+            background: #fff;
+            color: var(--danger);
+            border: 1px solid #f3c6ce;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            background: #ffe6ea;
+            border-color: #ee8fa0;
         }
 
         .expand-icon {
@@ -389,6 +583,61 @@
             margin-top: 10px;
         }
 
+        .interview-status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fb;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 0 10px;
+            border-radius: 999px;
+            color: #7a4a00;
+            background: #fff3d8;
+            font-weight: 700;
+        }
+
+        .status-pill.done {
+            color: #147a48;
+            background: #e7f8ef;
+        }
+
+        .btn-report {
+            background: var(--brand);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-analyze-report {
+            background: #10b981;
+        }
+
+        .btn-report:disabled {
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .resume-preview {
             position: relative;
         }
@@ -398,10 +647,19 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .resume-header h5 {
             margin: 0;
+        }
+
+        .create-time {
+            font-size: 12px;
+            color: var(--muted);
+            flex: 1;
+            text-align: center;
         }
 
         .btn-edit {
@@ -661,7 +919,7 @@
         </div>
         <div class="topbar-controls">
             <span class="user-pill">admin / superadmin</span>
-            <button type="button" class="logout-btn">退出</button>
+            <button type="button" class="logout-btn" onclick="location.href='/api/ai-interview/hr/logout/'">退出</button>
         </div>
     </header>
 
@@ -673,9 +931,21 @@
                     <strong>生成面试</strong>
                     <span>上传原始文件并生成 AI 面试</span>
                 </a>
+                <a class="nav-item" href="/api/ai-interview/hr/batch/">
+                    <strong>批量生成面试</strong>
+                    <span>多份简历逐一解析并生成链接</span>
+                </a>
                 <a class="nav-item active" href="/api/ai-interview/hr/candidates/">
                     <strong>候选人管理</strong>
                     <span>查看和管理所有候选人信息</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/token-dashboard/" data-admin-only style="display: none;">
+                    <strong>💎 词元计算台</strong>
+                    <span>追踪AI服务Token消耗</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/users/" data-admin-only style="display: none;">
+                    <strong>HR 用户管理</strong>
+                    <span>维护可登录 HR 工作台的用户</span>
                 </a>
             </nav>
         </aside>
@@ -688,30 +958,42 @@
                 </div>
             </div>
 
-            <div class="search-panel">
-                <div class="search-row">
-                    <div class="search-group">
-                        <label>姓名</label>
-                        <input type="text" id="searchName" placeholder="请输入候选人姓名">
+            <div class="container">
+                <div class="form-panel">
+                    <div class="type-tabs" role="tablist" aria-label="候选人类型">
+                        <button type="button" class="type-tab active" data-type="initial_interview" onclick="switchInterviewType('initial_interview')">面试</button>
+                        <button type="button" class="type-tab" data-type="discussion" onclick="switchInterviewType('discussion')">面谈</button>
                     </div>
-                    <div class="search-group">
-                        <label>手机号</label>
-                        <input type="text" id="searchPhone" placeholder="请输入手机号">
+                    <div class="search-panel">
+                        <div class="search-row">
+                            <div class="search-group">
+                                <label>姓名</label>
+                                <input type="text" id="searchName" placeholder="请输入候选人姓名">
+                            </div>
+                            <div class="search-group">
+                                <label>手机号</label>
+                                <input type="text" id="searchPhone" placeholder="请输入手机号">
+                            </div>
+                            <div class="search-group">
+                                <label>邮箱</label>
+                                <input type="text" id="searchEmail" placeholder="请输入邮箱地址">
+                            </div>
+                            <button type="button" class="btn-search" onclick="searchCandidates()">搜索</button>
+                        </div>
                     </div>
-                    <div class="search-group">
-                        <label>邮箱</label>
-                        <input type="text" id="searchEmail" placeholder="请输入邮箱地址">
-                    </div>
-                    <button type="button" class="btn-search" onclick="searchCandidates()">搜索</button>
-                </div>
-            </div>
 
             <div class="candidate-list" id="candidateList">
                 <div class="list-header">
                     <div>姓名</div>
+                    <div>创建人</div>
                     <div>手机号</div>
+                    <div>完成情况</div>
+                    <div>简历匹配度</div>
+                    <div>岗位匹配度</div>
+                    <div>评估组</div>
                     <div>邮箱</div>
                     <div>最高学历</div>
+                    <div>操作</div>
                 </div>
                 <div id="candidateContainer">
                     <div class="empty-state">
@@ -737,19 +1019,34 @@
                     <button class="pagination-btn" onclick="jumpToPage()">确定</button>
                 </div>
             </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
         let candidates = [];
         let currentPage = 1;
         let totalPages = 1;
         let totalCount = 0;
         let pageSize = 10;
+        let currentInterviewType = 'initial_interview';
 
         async function loadCandidates(page = 1) {
             try {
-                const response = await fetch(`/api/ai-interview/hr/candidates/list/?page=${page}&page_size=${pageSize}`);
+                const response = await fetch(`/api/ai-interview/hr/candidates/list/?page=${page}&page_size=${pageSize}&interview_type=${encodeURIComponent(currentInterviewType)}`);
                 const data = await response.json();
                 candidates = data.candidates || [];
                 currentPage = data.page || 1;
@@ -764,6 +1061,15 @@
 
         function searchCandidates() {
             currentPage = 1;
+            loadCandidates(1);
+        }
+
+        function switchInterviewType(type) {
+            currentInterviewType = type;
+            currentPage = 1;
+            document.querySelectorAll('.type-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
             loadCandidates(1);
         }
 
@@ -851,28 +1157,37 @@
             }
 
             container.innerHTML = data.map(candidate => `
-                <div class="list-item" onclick="toggleExpand('${candidate.candidate_id}')">
+                <div class="list-item" data-candidate-id="${candidate.config_id}" onclick="toggleExpand('${candidate.config_id}')">
                     <div data-label="姓名" class="candidate-name">${escapeHTML(candidate.name)} <span class="expand-icon">▼</span></div>
-                    <div data-label="手机号" class="candidate-phone">${escapeHTML(candidate.phone)}</div>
+                    <div data-label="创建人" class="candidate-creator">${escapeHTML(candidate.created_by_label || '-')}</div>
+                    <div data-label="手机号" class="candidate-phone">${escapeHTML(candidate.phone || '-')}</div>
+                    <div data-label="完成情况" class="candidate-status"><span class="mini-pill ${candidate.interview_completed ? 'done' : ''}">${escapeHTML(candidate.interview_status || '未完成')}</span></div>
+                    <div data-label="简历匹配度" class="candidate-match">${renderScoreRing(candidate.job_match_score, candidate.job_match_status, candidate.job_match_summary || '')}</div>
+                    <div data-label="岗位匹配度" class="candidate-position-match">${renderScoreRing(candidate.position_match_score, 'completed', candidate.position_match_summary || '')}</div>
+                    <div data-label="评估组" class="candidate-assessment-group">${renderAssessmentGroupSelect(candidate)}</div>
                     <div data-label="邮箱" class="candidate-email">${escapeHTML(candidate.email || '-')}</div>
                     <div data-label="学历" class="candidate-education">${escapeHTML(candidate.highest_education || '-')}</div>
+                    <div data-label="操作" class="candidate-actions">
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteCandidate('${candidate.config_id}', '${candidate.candidate_id}', '${encodeURIComponent(candidate.name || '')}')">删除</button>
+                    </div>
                 </div>
-                <div class="expand-content" id="expand-${candidate.candidate_id}">
-                    <h4>面试详情</h4>
+                <div class="expand-content" id="expand-${candidate.config_id}">
+                    <h4>${escapeHTML(candidate.interview_type_label || '面试')}详情</h4>
                     <div class="link-box">
                         <input type="text" value="${escapeHTML(candidate.interview_url || '-')}" readonly>
-                        <button class="btn-copy-link" onclick="event.stopPropagation(); copyLink('${candidate.interview_url}', '${candidate.candidate_id}')">复制链接</button>
+                        <button class="btn-copy-link" onclick="event.stopPropagation(); copyLink('${candidate.interview_url}', '${candidate.config_id}')">复制链接</button>
                     </div>
                     <div class="resume-preview">
                         <div class="resume-header">
                             <h5>简历信息</h5>
+                            <div class="create-time">创建时间：${escapeHTML(candidate.created_at ? formatDate(candidate.created_at) : '-')}</div>
                             <div>
-                                <button class="btn-edit" onclick="event.stopPropagation(); enableEdit('${candidate.candidate_id}')">编辑</button>
-                                <button class="btn-save" id="save-btn-${candidate.candidate_id}" onclick="event.stopPropagation(); saveEdit('${candidate.candidate_id}')" style="display: none;">保存</button>
-                                <button class="btn-cancel" id="cancel-btn-${candidate.candidate_id}" onclick="event.stopPropagation(); cancelEdit('${candidate.candidate_id}')" style="display: none;">取消</button>
+                                <button class="btn-edit" onclick="event.stopPropagation(); enableEdit('${candidate.config_id}')">编辑</button>
+                                <button class="btn-save" id="save-btn-${candidate.config_id}" onclick="event.stopPropagation(); saveEdit('${candidate.config_id}')" style="display: none;">保存</button>
+                                <button class="btn-cancel" id="cancel-btn-${candidate.config_id}" onclick="event.stopPropagation(); cancelEdit('${candidate.config_id}')" style="display: none;">取消</button>
                             </div>
                         </div>
-                        <div class="resume-view-form" id="view-form-${candidate.candidate_id}">
+                        <div class="resume-view-form" id="view-form-${candidate.config_id}">
                             <div class="resume-info-grid">
                                 <div class="resume-info-item"><span>姓名</span>${escapeHTML(candidate.name)}</div>
                                 <div class="resume-info-item"><span>电话</span>${escapeHTML(candidate.phone)}</div>
@@ -880,44 +1195,128 @@
                                 <div class="resume-info-item"><span>学历</span>${escapeHTML(candidate.highest_education || '-')}</div>
                                 <div class="resume-info-item"><span>工作年限</span>${escapeHTML(candidate.work_years || '-')}</div>
                                 <div class="resume-info-item"><span>岗位</span>${escapeHTML(candidate.job_name || '-')}</div>
+                                <div class="resume-info-item"><span>评估组</span>${escapeHTML(candidate.assessment_group_label || '-')}</div>
+                                <div class="resume-info-item"><span>简历匹配度</span>${escapeHTML(formatScorePercent(candidate.job_match_score, candidate.job_match_status))}</div>
+                                <div class="resume-info-item"><span>岗位匹配度</span>${escapeHTML(formatScorePercent(candidate.position_match_score, 'completed'))}</div>
                             </div>
                             ${candidate.summary ? `<div class="resume-summary"><span>个人简介</span><br>${escapeHTML(candidate.summary)}</div>` : ''}
+                            <div class="interview-status-row">
+                                <div>
+                                    <span>${escapeHTML(candidate.interview_type_label || '面试')}状态</span>
+                                    <span class="status-pill ${candidate.interview_completed ? 'done' : ''}">${escapeHTML(candidate.interview_status || '未完成')}</span>
+                                </div>
+                                ${candidate.interview_completed ? `
+                                    <div class="report-actions">
+                                        ${candidate.can_analyze_report ? `<button class="btn-report btn-analyze-report" id="analyze-btn-${candidate.config_id}" onclick="event.stopPropagation(); analyzeInterviewReport('${candidate.config_id}', '${encodeURIComponent(candidate.candidate_id || '')}', '${candidate.analyze_report_url || ''}', '${candidate.interview_type || ''}')">${candidate.interview_type === 'discussion' ? (candidate.report_analyzed ? '重新分析面谈报告' : '分析面谈报告') : (candidate.report_analyzed ? '重新分析问答报告' : '分析问答报告')}</button>` : ''}
+                                        <button class="btn-report" onclick="event.stopPropagation(); openInterviewReport('${candidate.report_url}')">查看问答报告</button>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
-                        <div class="resume-edit-form" id="edit-form-${candidate.candidate_id}">
+                        <div class="resume-edit-form" id="edit-form-${candidate.config_id}">
                             <div class="edit-form-grid">
                                 <div class="edit-form-item">
                                     <label>姓名</label>
-                                    <input type="text" id="edit-name-${candidate.candidate_id}" value="${escapeHTML(candidate.name)}">
+                                    <input type="text" id="edit-name-${candidate.config_id}" value="${escapeHTML(candidate.name)}">
                                 </div>
                                 <div class="edit-form-item">
                                     <label>电话</label>
-                                    <input type="text" id="edit-phone-${candidate.candidate_id}" value="${escapeHTML(candidate.phone)}">
+                                    <input type="text" id="edit-phone-${candidate.config_id}" value="${escapeHTML(candidate.phone)}">
                                 </div>
                                 <div class="edit-form-item">
                                     <label>邮箱</label>
-                                    <input type="email" id="edit-email-${candidate.candidate_id}" value="${escapeHTML(candidate.email || '')}">
+                                    <input type="email" id="edit-email-${candidate.config_id}" value="${escapeHTML(candidate.email || '')}">
                                 </div>
                                 <div class="edit-form-item">
                                     <label>学历</label>
-                                    <input type="text" id="edit-education-${candidate.candidate_id}" value="${escapeHTML(candidate.highest_education || '')}">
+                                    <input type="text" id="edit-education-${candidate.config_id}" value="${escapeHTML(candidate.highest_education || '')}">
                                 </div>
                                 <div class="edit-form-item">
                                     <label>工作年限</label>
-                                    <input type="text" id="edit-workyears-${candidate.candidate_id}" value="${escapeHTML(candidate.work_years || '')}">
+                                    <input type="text" id="edit-workyears-${candidate.config_id}" value="${escapeHTML(candidate.work_years || '')}">
                                 </div>
                                 <div class="edit-form-item">
                                     <label>岗位</label>
-                                    <input type="text" id="edit-job-${candidate.candidate_id}" value="${escapeHTML(candidate.job_name || '')}">
+                                    <input type="text" id="edit-job-${candidate.config_id}" value="${escapeHTML(candidate.job_name || '')}">
                                 </div>
                             </div>
                             <div class="edit-form-item">
                                 <label>个人简介</label>
-                                <textarea id="edit-summary-${candidate.candidate_id}">${escapeHTML(candidate.summary || '')}</textarea>
+                                <textarea id="edit-summary-${candidate.config_id}">${escapeHTML(candidate.summary || '')}</textarea>
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function scoreRingClass(score, status) {
+            if (status !== 'completed' || score === null || score === undefined || score === '') return 'pending';
+            const value = Number(score);
+            if (Number.isNaN(value)) return 'pending';
+            if (value > 90) return 'gold';
+            if (value > 60) return '';
+            if (value < 60) return 'low';
+            return 'low';
+        }
+
+        function renderScoreRing(score, status, title = '') {
+            const hasScore = status === 'completed' && score !== null && score !== undefined && score !== '';
+            const value = hasScore ? Math.max(0, Math.min(100, Math.round(Number(score)))) : 0;
+            const label = hasScore && !Number.isNaN(value) ? value : '-';
+            return `<span class="score-ring ${scoreRingClass(score, status)}" style="--score:${Number.isNaN(value) ? 0 : value}" title="${escapeHTML(title || '')}"><span>${escapeHTML(label)}</span></span>`;
+        }
+
+        function renderAssessmentGroupSelect(candidate) {
+            const groups = Array.isArray(candidate.assessment_groups) ? candidate.assessment_groups : [];
+            if (!groups.length) {
+                return `<span>${escapeHTML(candidate.assessment_group_label || '-')}</span>`;
+            }
+            return `
+                <select class="assessment-select" onclick="event.stopPropagation()" onchange="event.stopPropagation(); switchAssessmentGroup('${candidate.config_id}', this.value)" title="${escapeHTML(candidate.assessment_group_label || '')}">
+                    ${groups.map(group => `
+                        <option value="${escapeHTML(group.id)}" ${group.id === candidate.assessment_group_id ? 'selected' : ''}>
+                            ${escapeHTML(group.label)}${group.detail ? `（${escapeHTML(group.detail)}）` : ''}
+                        </option>
+                    `).join('')}
+                    <option value="__temporary__">临时组</option>
+                </select>
+            `;
+        }
+
+        function formatScorePercent(score, status) {
+            if (status !== 'completed' || score === null || score === undefined || score === '') {
+                return '待分析';
+            }
+            const value = Math.max(0, Math.min(100, Math.round(Number(score))));
+            return Number.isNaN(value) ? '待分析' : `${value}%`;
+        }
+
+        async function switchAssessmentGroup(configId, assessmentGroupId) {
+            if (!configId || !assessmentGroupId) return;
+            try {
+                const response = await fetch('/api/ai-interview/hr/candidates/assessment-group/switch/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        config_id: configId,
+                        assessment_group_id: assessmentGroupId,
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    showToast(data.error || '切换评估组失败', 'error');
+                    loadCandidates(currentPage);
+                    return;
+                }
+                showToast(data.message || '评估组已切换', 'success');
+                loadCandidates(currentPage);
+            } catch (error) {
+                showToast('网络错误，切换评估组失败', 'error');
+                loadCandidates(currentPage);
+            }
         }
 
         function toggleExpand(id) {
@@ -943,6 +1342,65 @@
             }).catch(() => {
                 showToast('复制失败', 'error');
             });
+        }
+
+        function openInterviewReport(url) {
+            if (!url) {
+                showToast('暂无可查看的面试报告', 'error');
+                return;
+            }
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        async function analyzeInterviewReport(configId, candidateId, url, interviewType = '') {
+            if (!url) {
+                showToast('暂无可分析的面试报告', 'error');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById(`analyze-btn-${configId}`);
+            const originalText = analyzeBtn ? analyzeBtn.textContent : '';
+            if (analyzeBtn) {
+                analyzeBtn.disabled = true;
+                analyzeBtn.textContent = '分析中...';
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        config_id: configId,
+                        candidate_id: decodeURIComponent(candidateId || ''),
+                    }),
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showToast(data.error || (interviewType === 'discussion' ? '分析面谈报告失败' : '分析问答报告失败'), 'error');
+                    return;
+                }
+
+                showToast(data.message || (interviewType === 'discussion' ? '面谈报告分析完成' : '问答报告分析完成'), 'success');
+                const candidate = candidates.find(item => item.config_id === configId);
+                if (candidate) {
+                    candidate.report_analyzed = true;
+                }
+                if (analyzeBtn) {
+                    analyzeBtn.textContent = interviewType === 'discussion' ? '重新分析面谈报告' : '重新分析问答报告';
+                }
+            } catch (error) {
+                showToast('网络错误，分析失败', 'error');
+            } finally {
+                if (analyzeBtn) {
+                    analyzeBtn.disabled = false;
+                    if (analyzeBtn.textContent === '分析中...') {
+                        analyzeBtn.textContent = originalText;
+                    }
+                }
+            }
         }
 
         function enableEdit(candidateId) {
@@ -974,6 +1432,37 @@
                 if (editBtn) editBtn.style.display = 'inline-block';
                 if (saveBtn) saveBtn.style.display = 'none';
                 if (cancelBtn) cancelBtn.style.display = 'none';
+            }
+        }
+
+        async function deleteCandidate(configId, candidateId, encodedName) {
+            const candidateName = decodeURIComponent(encodedName || '') || '该候选人';
+            const confirmed = window.confirm(`确定删除 ${candidateName} 的这条候选人信息吗？删除后会同步清理该候选人的面试记录 JSON，且无法恢复。`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/ai-interview/hr/candidates/delete/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        config_id: configId,
+                        candidate_id: candidateId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('删除成功', 'success');
+                    const nextPage = candidates.length <= 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+                    loadCandidates(nextPage);
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，删除失败', 'error');
             }
         }
 
@@ -1096,6 +1585,26 @@
                 timeout = setTimeout(later, wait);
             };
         }
+
+        async function applyAdminWorkspaceVisibility() {
+            try {
+                const pageToken = new URLSearchParams(window.location.search).get('token') || '';
+                const contextUrl = pageToken
+                    ? `/api/ai-interview/hr/auth-context/?token=${encodeURIComponent(pageToken)}`
+                    : '/api/ai-interview/hr/auth-context/';
+                const response = await fetch(contextUrl);
+                const data = await response.json();
+                if (response.ok && data.can_manage_hr_users) {
+                    document.querySelectorAll('[data-admin-only]').forEach(item => {
+                        item.style.display = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载权限信息失败:', error);
+            }
+        }
+
+        applyAdminWorkspaceVisibility();
     </script>
 </body>
 </html>

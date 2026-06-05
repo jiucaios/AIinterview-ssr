@@ -38,6 +38,7 @@ class VoiceService:
             from dashscope.audio.tts_v2 import SpeechSynthesizer
             
             dashscope.api_key = self.api_key
+            dashscope.base_url = self.base_url
             
             print(f"开始TTS合成: text='{text[:20]}...', model=cosyvoice-v1, voice={voice}")
             
@@ -123,6 +124,7 @@ class VoiceService:
             from dashscope.audio.asr import Recognition
             
             dashscope.api_key = self.api_key
+            dashscope.base_url = self.base_url
             
             # 读取音频文件
             with open(audio_file_path, 'rb') as f:

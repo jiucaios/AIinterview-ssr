@@ -16,7 +16,9 @@ class EmbeddingService:
         if cls._api_key is None:
             cls._api_key = getattr(settings, 'DASHSCOPE_API_KEY', '')
             cls._model_name = getattr(settings, 'QWEN_EMBEDDING_MODEL', 'text-embedding-v4')
+            cls._base_url = getattr(settings, 'DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com')
             dashscope.api_key = cls._api_key
+            dashscope.base_url = cls._base_url
 
     @classmethod
     def encode(cls, texts: List[str]) -> List[List[float]]:

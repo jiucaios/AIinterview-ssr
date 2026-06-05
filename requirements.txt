@@ -8,6 +8,11 @@ Django>=4.2,<5.0
 # Django REST Framework
 djangorestframework>=3.14.0
 
+# WebSocket runtime
+channels>=4.0.0
+daphne>=4.0.0
+websocket-client>=1.8.0
+
 # 千问API SDK
 dashscope>=1.20.0
 
@@ -33,4 +38,4 @@ pytesseract>=0.3.10
 # 语音处理
 SpeechRecognition>=3.10.0
 pyaudio>=0.2.14
-wave>=0.0.2
+# wave is provided by the Python standard library.

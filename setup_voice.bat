@@ -48,6 +48,6 @@ echo 2. 请允许麦克风权限以使用语音识别功能
 echo 3. 确保在localhost或HTTPS环境下使用
 echo.
 
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 
 pause

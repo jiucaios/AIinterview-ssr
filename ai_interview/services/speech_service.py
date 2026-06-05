@@ -1,207 +1,200 @@
-from typing import Optional, Dict, Any, Generator, AsyncGenerator
+import asyncio
+import base64
+from typing import Optional, Dict, Any, Generator
 import dashscope
-from dashscope.audio.asr import Transcription
-from dashscope.audio.tts import SpeechSynthesizer
-from dashscope import Generation
+from dashscope.audio.qwen_omni import (
+    AudioFormat,
+    MultiModality,
+    OmniRealtimeCallback,
+    OmniRealtimeConversation,
+)
 from django.conf import settings
+
+def get_realtime_model():
+    return getattr(settings, 'QWEN_REALTIME_MODEL', 'qwen3.5-omni-plus-realtime')
+
+def get_realtime_voice():
+    return getattr(settings, 'QWEN_REALTIME_VOICE', 'Sunnybobi')
+
+def get_realtime_url():
+    return getattr(settings, 'QWEN_REALTIME_URL', 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime')
 
 
 class SpeechService:
     @classmethod
     def get_api_key(cls):
-        """动态获取API密钥"""
         return getattr(settings, 'DASHSCOPE_API_KEY', '')
+    
+    @classmethod
+    def get_base_url(cls):
+        return getattr(settings, 'DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com')
 
     @classmethod
     def initialize(cls):
-        """初始化API密钥"""
-        api_key = cls.get_api_key()
-        if api_key:
-            dashscope.api_key = api_key
+        pass
 
     @classmethod
     def speech_to_text(cls, audio_data: bytes, format: str = 'wav') -> Optional[str]:
-        """
-        使用paraformer-realtime-v1将语音转换为文字
-        
-        Args:
-            audio_data: 音频数据（字节）
-            format: 音频格式（wav, mp3, ogg等）
-        
-        Returns:
-            识别出的文字，失败返回None
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        cls.initialize()
-        api_key = cls.get_api_key()
-        if not api_key:
-            logger.error("DASHSCOPE_API_KEY not configured")
-            return None
+        return cls._streaming_asr(audio_data)
 
-        if not audio_data or len(audio_data) == 0:
-            logger.error("Empty audio data received")
-            return None
+    @classmethod
+    def _streaming_asr(cls, audio_data: bytes) -> Optional[str]:
+        class ASRCallback(OmniRealtimeCallback):
+            def __init__(self):
+                self.transcript = ""
+                self.done = False
+                self.event = asyncio.Event()
+
+            def on_open(self):
+                pass
+
+            def on_close(self, code, msg):
+                self.done = True
+                self.event.set()
+
+            def on_event(self, message):
+                event_type = message.get("type")
+                if event_type == "conversation.item.input_audio_transcription.completed":
+                    self.transcript = message.get("transcript", "")
+                    self.done = True
+                    self.event.set()
+                elif event_type == "error":
+                    self.done = True
+                    self.event.set()
 
         try:
-            logger.info(f"Calling ASR with format: {format}, data size: {len(audio_data)} bytes")
+            api_key = cls.get_api_key()
+            if not api_key:
+                return None
+
+            dashscope.api_key = api_key
+            dashscope.base_url = cls.get_base_url()
             
-            response = Transcription.call(
-                model='paraformer-realtime-v1',
-                file_urls=['data:audio/wav;base64,' + audio_data.hex()],
-                format=format,
-                sample_rate=16000,
-                language='zh'
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            callback = ASRCallback()
+            conv = OmniRealtimeConversation(
+                model=get_realtime_model(),
+                callback=callback,
+                url=get_realtime_url(),
+                headers=headers,
             )
 
-            logger.info(f"ASR response status: {response.status_code}")
-            
-            if response.status_code == 200:
-                if hasattr(response, 'output') and response.output:
-                    if hasattr(response.output, 'result') and response.output.result:
-                        text = response.output.result.get('text', '')
-                        logger.info(f"ASR recognized text: {text[:50]}...")
-                        return text
-                    else:
-                        logger.warning("ASR response result is None")
-                        return ''
-                else:
-                    logger.warning("ASR response output is None")
-                    return ''
-            else:
-                logger.error(f"ASR API returned status {response.status_code}")
-                return None
+            conv.connect()
+            conv.update_session(
+                output_modalities=[MultiModality.TEXT],
+                input_audio_format=AudioFormat.PCM_16000HZ_MONO_16BIT,
+                enable_input_audio_transcription=True,
+            )
+
+            base64_audio = base64.b64encode(audio_data).decode('utf-8')
+            conv.append_audio(base64_audio)
+            conv.commit()
+
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(asyncio.wait_for(callback.event.wait(), timeout=15.0))
+            loop.close()
+
+            conv.close()
+            return callback.transcript
         except Exception as e:
-            logger.error(f"ASR error: {str(e)}", exc_info=True)
             return None
 
     @classmethod
     def text_to_speech(cls, text: str) -> Optional[bytes]:
-        """
-        使用cosyvoice-v1将文字转换为语音（使用longxiaochun音色）
-        
-        Args:
-            text: 要合成的文字
-        
-        Returns:
-            音频数据（字节），失败返回None
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        cls.initialize()
-        api_key = cls.get_api_key()
-        if not api_key:
-            logger.error("DASHSCOPE_API_KEY not configured")
-            return None
+        return cls._streaming_tts(text)
+
+    @classmethod
+    def _streaming_tts(cls, text: str) -> Optional[bytes]:
+        class TTSCallback(OmniRealtimeCallback):
+            def __init__(self):
+                self.audio_chunks = []
+                self.done = False
+                self.event = asyncio.Event()
+
+            def on_open(self):
+                pass
+
+            def on_close(self, code, msg):
+                self.done = True
+                self.event.set()
+
+            def on_event(self, message):
+                event_type = message.get("type")
+                if event_type == "response.audio.delta":
+                    delta = message.get("delta")
+                    if delta:
+                        self.audio_chunks.append(base64.b64decode(delta))
+                elif event_type == "response.done":
+                    self.done = True
+                    self.event.set()
+                elif event_type == "error":
+                    self.done = True
+                    self.event.set()
 
         try:
-            logger.info(f"Calling TTS with text: {text[:30]}...")
-            
-            from dashscope.audio.tts_v2 import SpeechSynthesizer
-            
-            synthesizer = SpeechSynthesizer(
-                model='cosyvoice-v1',
-                voice='longxiaochun'
-            )
-            response = synthesizer.call(text)
-
-            if isinstance(response, bytes):
-                audio_data = response
-            elif hasattr(response, 'get_audio_data'):
-                audio_data = response.get_audio_data()
-            elif hasattr(response, 'audio'):
-                audio_data = response.audio
-            else:
-                audio_data = None
-                
-            if audio_data and len(audio_data) > 0:
-                logger.info(f"TTS succeeded, audio length: {len(audio_data)} bytes")
-                return audio_data
-            else:
-                logger.error("TTS API returned no audio data")
+            api_key = cls.get_api_key()
+            if not api_key:
                 return None
-        except Exception as e:
-            logger.error(f"TTS error: {str(e)}", exc_info=True)
-            return None
 
-    
+            dashscope.api_key = api_key
+            dashscope.base_url = cls.get_base_url()
+            
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            callback = TTSCallback()
+            conv = OmniRealtimeConversation(
+                model=get_realtime_model(),
+                callback=callback,
+                url=get_realtime_url(),
+                headers=headers,
+            )
+
+            conv.connect()
+            conv.update_session(
+                output_modalities=[MultiModality.AUDIO],
+                voice=get_realtime_voice(),
+                output_audio_format=AudioFormat.PCM_24000HZ_MONO_16BIT,
+            )
+
+            item = {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": text}],
+            }
+            conv.create_item(item)
+            conv.create_response(output_modalities=[MultiModality.AUDIO])
+
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(asyncio.wait_for(callback.event.wait(), timeout=15.0))
+            loop.close()
+
+            conv.close()
+            return b''.join(callback.audio_chunks) if callback.audio_chunks else None
+        except Exception as e:
+            return None
 
     @classmethod
     def stream_tts(cls, text: str) -> Generator[bytes, None, None]:
-        """
-        流式文字转语音
-        
-        Args:
-            text: 要合成的文字
-        
-        Returns:
-            音频数据片段生成器
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        cls.initialize()
-        api_key = cls.get_api_key()
-        if not api_key:
-            logger.error("DASHSCOPE_API_KEY not configured")
-            return
-
-        try:
-            synthesizer = SpeechSynthesizer(
-                model='sambert-zhide-v1',
-                voice='zhide',
-                format='wav',
-                sample_rate=16000,
-                stream=True
-            )
-            responses = synthesizer.call(text)
-
-            for response in responses:
-                if hasattr(response, 'output') and hasattr(response.output, 'audio'):
-                    yield response.output.audio
-        except Exception as e:
-            logger.error(f"Stream TTS error: {str(e)}", exc_info=True)
-            return
+        audio_data = cls.text_to_speech(text)
+        if audio_data:
+            chunk_size = 1024
+            for i in range(0, len(audio_data), chunk_size):
+                yield audio_data[i:i+chunk_size]
 
 
 class StreamingLLMService:
-    """流式LLM服务"""
-    
     @classmethod
     def stream_generate(cls, system_prompt: str, user_prompt: str) -> Generator[str, None, None]:
-        """
-        流式生成回答
-        
-        Args:
-            system_prompt: 系统提示
-            user_prompt: 用户输入
-        
-        Returns:
-            文本片段生成器
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        try:
-            SpeechService.initialize()
-            
-            # 使用配置中的模型名称
-            from django.conf import settings
-            model_name = getattr(settings, 'QWEN_MODEL', 'qwen-plus')
-            
-            responses = Generation.call(
-                model=model_name,
-                prompt=user_prompt,
-                system_prompt=system_prompt,
-                stream=True
-            )
-            
-            for response in responses:
-                if hasattr(response, 'output') and response.output:
-                    if hasattr(response.output, 'text') and response.output.text:
-                        yield response.output.text
-        except Exception as e:
-            logger.error(f"Streaming LLM error: {str(e)}", exc_info=True)
-            return
+        from .qwen_service import QwenService
+        result = QwenService.generate_question(system_prompt, user_prompt)
+        if result and not result.startswith('API调用') and not result.startswith('未配置'):
+            yield result

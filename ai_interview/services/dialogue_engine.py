@@ -8,35 +8,66 @@ from .hard_field_detector import HardFieldDetector
 from ..models import TalentProfile
 
 
+def evaluate_answer(answer_text: str, round_num: int, question_text: str = '') -> dict:
+    """Score answer relevance for the current interview round."""
+    result = QwenService.evaluate_answer_relevance(question_text, answer_text)
+    score = result.get('score', 0)
+    return {
+        'score': score,
+        'passed': score > 50,
+        'needs_reask': score < 20,
+        'round_num': round_num,
+        'reason': result.get('reason', ''),
+    }
+
+
 class DialogueEngine:
     ROUND_CONFIG = [
         {
             'name': 'hard_field',
+            'display_name': '硬性指标补全',
+            'objective': '确认基本背景信息',
+            'skip_if_empty': True,
             'description': '硬性指标补全',
             'priority': 1,
         },
         {
             'name': 'role_verification',
+            'display_name': '项目角色真实性',
+            'objective': '验证项目经历真实性',
+            'skip_if_empty': False,
             'description': '项目角色真实性',
             'priority': 2,
         },
         {
             'name': 'role_depth',
+            'display_name': '项目角色深度',
+            'objective': '考察实际贡献深度',
+            'skip_if_empty': False,
             'description': '项目角色深度',
             'priority': 3,
         },
         {
             'name': 'skill_deviation',
+            'display_name': '技能偏差',
+            'objective': '验证技能掌握程度',
+            'skip_if_empty': False,
             'description': '技能偏差',
             'priority': 4,
         },
         {
             'name': 'language_logic',
+            'display_name': '语言逻辑',
+            'objective': '评估表达能力',
+            'skip_if_empty': False,
             'description': '语言逻辑',
             'priority': 5,
         },
         {
             'name': 'special_requirement',
+            'display_name': '岗位特殊要求',
+            'objective': '针对特定要求提问',
+            'skip_if_empty': True,
             'description': '岗位特殊要求',
             'priority': 6,
         },
@@ -44,8 +75,8 @@ class DialogueEngine:
 
     SHORT_ANSWER_THRESHOLD = 5
     SIMILARITY_THRESHOLD = 0.15
-    MAX_INVALID_ATTEMPTS = 1
-    WAIT_TIMEOUT_SECONDS = 10
+    MAX_REASKS_PER_ROUND = 1
+    WAIT_TIMEOUT_SECONDS = 0
 
     def __init__(self, session_id: str):
         self.session_id = session_id
@@ -53,6 +84,9 @@ class DialogueEngine:
         self._is_processing = False
 
     def get_current_round(self) -> int:
+        latest_session = SessionManager.get_session(self.session_id)
+        if latest_session:
+            self.session_data = latest_session
         if not self.session_data:
             return 0
         return self.session_data.get('current_round', 0)
@@ -87,32 +121,39 @@ class DialogueEngine:
 
             SessionManager.add_dialogue(self.session_id, 'user', answer)
 
+            if self._is_give_up_answer(answer):
+                self._skip_dimension(round_name, '候选人表示不会或不了解')
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
+
             if round_name == 'special_requirement':
                 return self._handle_special_answer(answer)
 
+            last_question = self._get_last_question()
             quality_result = QwenService.validate_answer_quality(
-                question=self._get_last_question(),
+                question=last_question,
                 answer=answer,
                 round_type=round_name
             )
+            answer_score = int(quality_result.get('score', 0))
 
-            if not quality_result['valid']:
-                invalid_count = SessionManager.increment_invalid_count(self.session_id, round_name)
-
-                if invalid_count >= self.MAX_INVALID_ATTEMPTS:
-                    self._skip_dimension(round_name)
-                    SessionManager.advance_round(self.session_id)
-                    return self._generate_next_question()
-
-                similarity, is_similar = EmbeddingService.compute_text_similarity_with_question(
-                    question=self._get_last_question(),
-                    answer=answer,
-                    threshold=self.SIMILARITY_THRESHOLD
-                )
-
-                if not is_similar:
+            if answer_score < 20:
+                reask_count = SessionManager.increment_invalid_count(self.session_id, round_name)
+                if reask_count <= self.MAX_REASKS_PER_ROUND:
                     result = self._rephrase_question(round_name)
+                    result['reask_count'] = reask_count
+                    result['max_reasks'] = self.MAX_REASKS_PER_ROUND
+                    result['answer_score'] = answer_score
                     return result
+
+                self._skip_dimension(round_name, 'answer relevance score below 20 after follow-up')
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
+
+            if answer_score <= 50:
+                self._skip_dimension(round_name, f'answer relevance score {answer_score} did not pass')
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
 
             self._store_round_result(round_name, answer, quality_result)
             SessionManager.advance_round(self.session_id)
@@ -173,8 +214,11 @@ class DialogueEngine:
                 return {
                     'session_id': self.session_id,
                     'question': last_question,
-                    'round': current_round,
+                    'current_round': current_round,
+                    'round': current_round + 1,
                     'round_name': round_config['name'],
+                    'round_display_name': round_config.get('display_name', round_config['name']),
+                    'round_objective': round_config.get('objective', ''),
                     'total_rounds': len(self.ROUND_CONFIG),
                     'resumed': True,
                     'dialogue_history': dialogue_history,
@@ -184,6 +228,9 @@ class DialogueEngine:
         return self._generate_next_question()
 
     def _get_last_question(self) -> str:
+        latest_session = SessionManager.get_session(self.session_id)
+        if latest_session:
+            self.session_data = latest_session
         history = self.session_data.get('dialogue_history', [])
         for item in reversed(history):
             if item.get('role') == 'assistant':
@@ -251,29 +298,41 @@ class DialogueEngine:
             fallback_question = f"请具体描述一下相关情况以及您在其中的主要职责。"
             new_question = fallback_question
 
-        if new_question and new_question.strip() != original_question.strip():
-            SessionManager.add_dialogue(self.session_id, 'assistant', new_question)
-            SessionManager.set_reasked(self.session_id, True)
-            return {
-                'session_id': self.session_id,
-                'question': new_question,
-                'round': self.get_current_round(),
-                'round_name': round_name,
-                'reasked': True,
-            }
+        if not new_question or new_question.strip() == original_question.strip():
+            reask_count = SessionManager.get_invalid_count(self.session_id, round_name)
+            new_question = "我再换个问法，您能补充一个具体做法、职责或结果吗？" if reask_count <= 1 else "最后再确认一下，您能用一两句话补充最关键的事实吗？"
 
-        invalid_count = SessionManager.increment_invalid_count(self.session_id, round_name)
-        if invalid_count >= self.MAX_INVALID_ATTEMPTS:
-            self._skip_dimension(round_name)
-            SessionManager.advance_round(self.session_id)
-        
-        return self._generate_next_question()
+        SessionManager.add_dialogue(self.session_id, 'assistant', new_question)
+        SessionManager.set_reasked(self.session_id, True)
+        return {
+            'session_id': self.session_id,
+            'question': new_question,
+            'current_round': self.get_current_round(),
+            'round': self.get_current_round() + 1,
+            'round_name': round_name,
+            'round_display_name': self._get_round_display_name(round_name),
+            'round_objective': self._get_round_objective(round_name),
+            'total_rounds': len(self.ROUND_CONFIG),
+            'reasked': True,
+            'success': True,
+        }
 
-    def _skip_dimension(self, dimension: str) -> None:
+    def _is_give_up_answer(self, answer: str) -> bool:
+        normalized = ''.join(str(answer or '').lower().split())
+        give_up_keywords = [
+            '不会', '不懂', '不知道', '不清楚', '没做过', '没有做过',
+            '没接触', '没有接触', '不了解', '答不上来', '不会答'
+        ]
+        return any(keyword in normalized for keyword in give_up_keywords)
+
+    def _skip_dimension(self, dimension: str, reason: str = '') -> None:
         session_data = SessionManager.get_session(self.session_id)
         if session_data:
             incomplete_reasons = session_data.get('incomplete_reasons', [])
-            incomplete_reasons.append(f'维度"{dimension}"因连续无效回答被跳过')
+            if reason:
+                incomplete_reasons.append(f'维度"{dimension}"因{reason}被跳过')
+            else:
+                incomplete_reasons.append(f'维度"{dimension}"因连续追问未获得有效信息被跳过')
             SessionManager.update_session(self.session_id, {'incomplete_reasons': incomplete_reasons})
 
     def _store_round_result(self, round_name: str, answer: str, quality_result: dict) -> None:
@@ -387,7 +446,40 @@ class DialogueEngine:
         if not session_data:
             return self._build_error_response('Session not found')
 
+        resume = session_data.get('resume', {})
+        job_config = session_data.get('job_config', {})
+
+        if round_name == 'hard_field':
+            missing_fields = session_data.get('hard_fields_missing', [])
+            if not missing_fields or len(missing_fields) == 0:
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
+            
+            resume = session_data.get('resume', {})
+            valid_missing_fields = []
+            for field in missing_fields:
+                if self._is_field_extractable(field, resume):
+                    valid_missing_fields.append(field)
+            
+            if not valid_missing_fields:
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
+
         if round_name == 'special_requirement':
+            special_reqs = job_config.get('special_requirements', [])
+            custom_questions = session_data.get('custom_questions', {})
+            
+            has_special_requirements = False
+            if isinstance(special_reqs, list) and len(special_reqs) > 0:
+                has_special_requirements = True
+            elif isinstance(special_reqs, str) and special_reqs.strip():
+                has_special_requirements = True
+            elif isinstance(custom_questions, dict) and len(custom_questions) > 0:
+                has_special_requirements = True
+            
+            if not has_special_requirements:
+                SessionManager.advance_round(self.session_id)
+                return self._generate_next_question()
             return self._handle_special_requirement_round(session_data)
 
         context = {
@@ -397,7 +489,7 @@ class DialogueEngine:
         }
 
         missing_fields = session_data.get('hard_fields_missing', [])
-        project_info = self._get_project_info(session_data)
+        project_info = self._get_project_info(session_data, round_name)
 
         question = QwenService.generate_interview_question(
             round_type=round_name,
@@ -407,18 +499,74 @@ class DialogueEngine:
         )
 
         if not question:
-            return self._build_error_response('Failed to generate question')
-
+            SessionManager.advance_round(self.session_id)
+            return self._generate_next_question()
+        
+        missing_fields = session_data.get('hard_fields_missing', [])
+        resume = session_data.get('resume', {})
+        valid_missing_fields = [f for f in missing_fields if self._is_field_extractable(f, resume)]
+        
         SessionManager.add_dialogue(self.session_id, 'assistant', question)
 
         return {
             'session_id': self.session_id,
             'question': question,
-            'round': current_round + 1,
+            'current_round': self.get_current_round(),
+            'round': self.get_current_round() + 1,
             'round_name': round_name,
+            'round_display_name': round_config.get('display_name', round_name),
+            'round_objective': round_config.get('objective', ''),
             'total_rounds': len(self.ROUND_CONFIG),
             'reasked': False,
+            'success': True,
+            'valid_missing_fields': valid_missing_fields,
         }
+    
+    def _is_field_extractable(self, field: str, resume: dict) -> bool:
+        """检查硬性字段是否可以从简历或上下文中提取"""
+        if not field or not isinstance(field, str):
+            return False
+        
+        field_lower = field.lower().strip()
+        resume_str = self._flatten_dict_to_string(resume)
+        
+        standard_fields = {
+            'english_level': ['英语', 'english', 'cet4', 'cet6', '四级', '六级', '雅思', 'ielts', '托福', 'toefl'],
+            'cert_pmp': ['pmp', '项目管理', 'PMP'],
+            'cert_cpa': ['cpa', '注册会计师', '会计'],
+            'cert_cfa': ['cfa', '金融分析师', 'CFA'],
+            'degree': ['学历', '学位', '本科', '硕士', '博士', 'bachelor', 'master', 'phd'],
+            'years_experience': ['经验', '工作年限', 'years', '年'],
+        }
+        
+        keywords = standard_fields.get(field_lower, [field_lower])
+        has_keywords = any(keyword.lower() in resume_str for keyword in keywords if len(keyword) >= 2)
+        
+        return has_keywords
+    
+    def _flatten_dict_to_string(self, data: dict, depth: int = 0) -> str:
+        """将字典展平为字符串"""
+        if depth > 5:
+            return str(data)
+        
+        parts = []
+        if isinstance(data, dict):
+            for key, value in data.items():
+                parts.append(f"{key}:{value}")
+                if isinstance(value, (dict, list)):
+                    parts.append(self._flatten_dict_to_string(value, depth + 1))
+                elif isinstance(value, str):
+                    parts.append(value)
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    parts.append(self._flatten_dict_to_string(item, depth + 1))
+                else:
+                    parts.append(str(item))
+        else:
+            parts.append(str(data))
+        
+        return ' '.join(parts).lower()
 
     def _handle_special_requirement_round(self, session_data: dict) -> Dict[str, Any]:
         custom_questions = session_data.get('custom_questions', {})
@@ -442,22 +590,44 @@ class DialogueEngine:
                 return {
                     'session_id': self.session_id,
                     'question': next_question,
-                    'round': len(self.ROUND_CONFIG),
+                    'current_round': self.get_current_round(),
+                    'round': self.get_current_round() + 1,
                     'round_name': 'special_requirement',
+                    'round_display_name': self._get_round_display_name('special_requirement'),
+                    'round_objective': self._get_round_objective('special_requirement'),
                     'total_rounds': len(self.ROUND_CONFIG),
                     'reasked': False,
                     'custom_question_key': next_key,
                     'custom_questions_remaining': len(remaining_questions) - 1,
+                    'success': True,
                 }
 
         return self._finalize_session()
 
-    def _get_project_info(self, session_data: dict) -> dict:
+    def _get_project_info(self, session_data: dict, round_name: str = '') -> dict:
         resume = session_data.get('resume', {})
         projects = resume.get('projects', [])
         if projects and isinstance(projects, list) and len(projects) > 0:
-            return projects[0] if isinstance(projects[0], dict) else {'name': projects[0]}
+            if round_name == 'role_depth' and len(projects) > 1:
+                project = projects[1]
+            else:
+                project = projects[0]
+            return project if isinstance(project, dict) else {'name': project}
         return {}
+
+    def _get_round_config_by_name(self, round_name: str) -> Dict[str, Any]:
+        for config in self.ROUND_CONFIG:
+            if config.get('name') == round_name:
+                return config
+        return {}
+
+    def _get_round_display_name(self, round_name: str) -> str:
+        config = self._get_round_config_by_name(round_name)
+        return config.get('display_name', round_name)
+
+    def _get_round_objective(self, round_name: str) -> str:
+        config = self._get_round_config_by_name(round_name)
+        return config.get('objective', '')
 
     def _finalize_session(self) -> Dict[str, Any]:
         SessionManager.end_session(self.session_id, 'completed')
@@ -496,6 +666,13 @@ class DialogueEngine:
                 'current_round': current_round,
                 'dialogue_history': dialogue_history,
                 'last_question': last_question,
+                'profile_data': {
+                    'qa_records': SessionManager.build_qa_records(dialogue_history),
+                    'dialogue_history': dialogue_history,
+                    'custom_question_results': session_data.get('custom_questions_answered', {}),
+                    'interview_completed': not incomplete,
+                    'session_state': 'incomplete' if incomplete else 'completed',
+                },
             }
         )
 
@@ -510,6 +687,9 @@ class DialogueEngine:
                 'confidence_score': confidence_score,
                 'profile_id': str(profile.id),
                 'message': reason or '会话异常结束',
+                'current_round': current_round,
+                'round': current_round + 1,
+                'total_rounds': len(self.ROUND_CONFIG),
             }
         else:
             return {
@@ -524,6 +704,9 @@ class DialogueEngine:
                 'message': '感谢您参与本次AI面试，祝您生活顺利',
                 'interview_completed': True,
                 'completion_message': '感谢您参与本次AI面试，祝您生活顺利',
+                'current_round': current_round,
+                'round': current_round + 1,
+                'total_rounds': len(self.ROUND_CONFIG),
             }
 
     def _calculate_confidence(

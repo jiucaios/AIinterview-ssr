@@ -3,299 +3,562 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI面试系统 - 候选人入口</title>
+    <title>未来世界 - 身份验证</title>
     <style>
+        :root {
+            --ink: #15172b;
+            --muted: #7b8498;
+            --panel: #ffffff;
+            --line: #e3e8f2;
+            --violet: #7c5cff;
+            --violet-dark: #181448;
+            --success: #20c878;
+            --danger: #ef466f;
+            --shadow: 0 24px 70px rgba(28, 23, 84, 0.18);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 50% 0%, rgba(130, 100, 255, 0.34), transparent 32%),
+                linear-gradient(135deg, #171451 0%, #151341 50%, #10101f 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        .site-header {
+            height: 64px;
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid rgba(228, 232, 242, 0.72);
+        }
+
+        .header-inner {
+            width: min(1120px, calc(100% - 48px));
+            height: 100%;
+            margin: 0 auto;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--ink);
+            font-size: 19px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .brand img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .support {
+            height: 34px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
+            border-radius: 8px;
+            color: #fff;
+            background: linear-gradient(135deg, #7c5cff, #6964ff);
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 10px 24px rgba(124, 92, 255, 0.28);
         }
-        
-        .container {
-            width: 100%;
-            max-width: 450px;
+
+        .page {
+            min-height: calc(100vh - 64px);
+            padding: 24px 32px;
+            display: grid;
+            place-items: center;
         }
-        
+
+        .shell {
+            width: min(1180px, 100%);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(460px, 540px);
+            gap: 58px;
+            align-items: center;
+        }
+
+        .intro {
+            color: #fff;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 14px;
+            border-radius: 999px;
+            color: #d2ccff;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .intro h1 {
+            margin: 0;
+            font-size: 56px;
+            line-height: 1.18;
+            letter-spacing: 0;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #ff86c5 0%, #a989ff 54%, #91a5ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .intro p {
+            max-width: 620px;
+            margin-top: 22px;
+            color: rgba(232, 231, 255, 0.72);
+            font-size: 18px;
+            line-height: 1.9;
+            font-weight: 600;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        .info-pill {
+            min-height: 36px;
+            padding: 0 14px;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            color: rgba(232, 231, 255, 0.76);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
         .card {
-            background: white;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.76);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 44px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .card-logo {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 18px;
+            display: grid;
+            place-items: center;
+            border-radius: 18px;
+            background: #f2f0ff;
+        }
+
+        .card-logo img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+        }
+
+        .card-title {
+            font-size: 30px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.7;
+            font-weight: 600;
+        }
+
+        .job-info {
+            margin-bottom: 24px;
+            padding: 20px;
+            border: 1px solid #e7ebf5;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            padding: 40px;
+            background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+        }
+
+        .job-info h3 {
+            margin-bottom: 6px;
+            font-size: 18px;
+            font-weight: 900;
             text-align: center;
         }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: white;
-        }
-        
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .job-info {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-        
-        .job-info h3 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 18px;
-        }
-        
+
         .job-info p {
-            color: #666;
-            font-size: 14px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
-            text-align: left;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
+            color: #31364a;
+            font-size: 13px;
+            font-weight: 900;
         }
-        
+
         .form-group input {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            height: 54px;
+            padding: 0 17px;
+            border: 1px solid #d8deeb;
+            border-radius: 14px;
+            color: var(--ink);
+            background: #fff;
+            font: inherit;
+            font-size: 16px;
+            transition: border-color 0.22s ease, box-shadow 0.22s ease;
         }
-        
+
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--violet);
+            box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.12);
         }
-        
-        .form-group input::placeholder {
-            color: #aaa;
-        }
-        
+
         .btn-start {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
+            height: 56px;
+            border: 0;
+            border-radius: 14px;
+            color: #fff;
+            background: linear-gradient(135deg, #8b67ff, #6d65ff);
+            box-shadow: 0 14px 34px rgba(124, 92, 255, 0.32);
+            font: inherit;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 900;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
         }
-        
+
         .btn-start:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 18px 42px rgba(124, 92, 255, 0.38);
         }
-        
+
         .btn-start:disabled {
-            opacity: 0.6;
+            opacity: 0.62;
             cursor: not-allowed;
-            transform: none;
         }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
+
         .footer {
-            margin-top: 30px;
+            margin-top: 26px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.8;
+            font-weight: 600;
         }
-        
-        .footer p {
-            color: #999;
-            font-size: 13px;
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 1000;
-            animation: slideIn 0.3s;
-        }
-        
-        .toast.success {
-            background: #28a745;
-        }
-        
-        .toast.error {
-            background: #dc3545;
-        }
-        
+
         .error-message {
-            color: #dc3545;
-            font-size: 13px;
-            margin-top: 10px;
             display: none;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            color: #9f1239;
+            background: #fff1f4;
+            border: 1px solid #ffd6df;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.6;
         }
-        
+
         .error-message.show {
             display: block;
         }
-        
+
+        .preparing-message {
+            display: none;
+            margin-bottom: 18px;
+            padding: 16px;
+            border-radius: 14px;
+            color: #4c3d00;
+            background: #fff8dc;
+            border: 1px solid #f4dfa3;
+            font-size: 15px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.7;
+        }
+
+        .preparing-message.show {
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            max-width: min(360px, calc(100vw - 40px));
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 16px 40px rgba(20, 18, 48, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #16b66d, #2ddc7d);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ef466f, #ce2f59);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @keyframes slideIn {
             from {
+                opacity: 0;
                 transform: translateX(100%);
             }
             to {
+                opacity: 1;
                 transform: translateX(0);
             }
         }
-        
-        .countdown {
-            margin-top: 20px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 8px;
-            color: #856404;
-            font-size: 14px;
+
+        @media (max-width: 880px) {
+            .shell {
+                grid-template-columns: 1fr;
+                gap: 28px;
+                width: min(680px, 100%);
+            }
+
+            .intro {
+                text-align: center;
+            }
+
+            .intro p,
+            .info-row {
+                justify-content: center;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .header-inner {
+                width: calc(100% - 32px);
+            }
+
+            .site-header {
+                height: 58px;
+            }
+
+            .brand {
+                font-size: 16px;
+            }
+
+            .support {
+                padding: 0 12px;
+            }
+
+            .page {
+                min-height: calc(100vh - 58px);
+                padding: 20px 16px;
+            }
+
+            .intro h1 {
+                font-size: 34px;
+            }
+
+            .card {
+                padding: 28px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="logo">🤖</div>
-            <h1 class="title">AI面试系统</h1>
-            <p class="subtitle">请验证身份后开始面试</p>
-            
-            <div class="job-info" id="jobInfo" style="display: none;">
-                <h3 id="jobName">-</h3>
-                <p id="jobDetails"></p>
-            </div>
-            
-            <div id="errorMessage" class="error-message">
-                <span id="errorText"></span>
-            </div>
-            
-            <div id="candidateForm" style="display: none;">
-                <div class="form-group">
-                    <label for="candidateName">姓名 *</label>
-                    <input type="text" id="candidateName" placeholder="请输入您的姓名" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="candidateEmail">邮箱 *</label>
-                    <input type="email" id="candidateEmail" placeholder="请输入您的邮箱" required>
-                </div>
-                
-                <button type="button" class="btn-start" id="verifyBtn">
-                    验证身份
-                </button>
-            </div>
-            
-            <div id="actionArea" style="display: none;">
-                <button type="button" class="btn-start" id="startBtn">
-                    开始面试
-                </button>
-            </div>
-            
-            <div class="footer">
-                <p>请确保在安静的环境中进行面试</p>
-                <p style="margin-top: 5px;">面试过程将自动录音和记录</p>
-            </div>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="/api/ai-interview/interview/welcome/" aria-label="未来世界">
+                <img src="/api/ai-interview/hr/send-email/images/email-logo.jpg" alt="未来世界 Logo" onerror="this.style.display='none'">
+                <span>未来世界</span>
+            </a>
+            <a class="support" href="mailto:jiucaios@qq.com">联系支持</a>
         </div>
-    </div>
-    
+    </header>
+
+    <main class="page">
+        <div class="shell">
+            <section class="intro">
+                <div class="eyebrow">AI 智能面试身份确认</div>
+                <h1><span class="gradient-text">确认你的信息后</span><br>进入正式面试</h1>
+                <p>请核对当前岗位与身份信息，按页面提示进入当前岗位的 AI 面试流程。</p>
+                <div class="info-row">
+                    <span class="info-pill">预计 5-10 分钟</span>
+                    <span class="info-pill">单人专属链接</span>
+                    <span class="info-pill">请保持网络稳定</span>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-logo">
+                        <img src="/api/ai-interview/hr/send-email/images/email-logo.jpg" alt="未来世界 Logo" onerror="this.style.display='none'">
+                    </div>
+                    <h2 class="card-title">请确认您的身份信息</h2>
+                </div>
+
+                <div class="job-info" id="jobInfo" style="display: none;">
+                    <h3 id="jobName">-</h3>
+                    <p id="jobDetails"></p>
+                </div>
+
+                <div id="errorMessage" class="error-message">
+                    <span id="errorText"></span>
+                </div>
+
+                <div id="preparingMessage" class="preparing-message">
+                    面试正在准备中，请稍等。
+                </div>
+
+                <div id="candidateForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="candidateName">姓名 *</label>
+                        <input type="text" id="candidateName" placeholder="请输入您的姓名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidateEmail">邮箱 *</label>
+                        <input type="email" id="candidateEmail" placeholder="请输入您的邮箱" required>
+                    </div>
+
+                    <button type="button" class="btn-start" id="verifyBtn">
+                        验证身份
+                    </button>
+                </div>
+
+                <div id="actionArea" style="display: none;">
+                    <button type="button" class="btn-start" id="startBtn">
+                        开始面试
+                    </button>
+                </div>
+
+                <div class="footer">
+                    <p>请确保在安静的环境中进行面试</p>
+                    <p>面试过程将自动记录您的作答内容</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
     <script>
         let configId = '';
         let sessionData = null;
         let candidateVerified = false;
-        
+        let autoStarting = false;
+        let resumeReady = false;
+        let preparePollTimer = null;
+        let identityVerificationRequired = true;
+        let currentInterviewType = 'initial_interview';
+        let currentInterviewTypeLabel = '面试';
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 从URL获取config_id
             const urlParams = new URLSearchParams(window.location.search);
             configId = urlParams.get('config_id');
-            
+
             if (!configId) {
                 showError('面试链接无效，请检查链接是否正确');
                 return;
             }
-            
-            // 加载岗位信息
+
             loadJobInfo();
-            
-            // 验证身份按钮点击
+
             const verifyBtn = document.getElementById('verifyBtn');
             verifyBtn.addEventListener('click', async function() {
                 await verifyCandidate();
             });
-            
-            // 开始面试按钮点击
+
             const startBtn = document.getElementById('startBtn');
             startBtn.addEventListener('click', async function() {
                 await startInterview();
             });
         });
-        
+
         async function loadJobInfo() {
             try {
-                const response = await fetch(`/api/interview/job-info/?config_id=${configId}`);
+                const response = await fetch(`/api/ai-interview/interview/job-info/?config_id=${configId}`);
                 const data = await response.json();
-                
+
                 if (response.ok) {
-                    document.getElementById('jobName').textContent = data.job_name;
-                    document.getElementById('jobDetails').textContent = `级别: ${data.job_level}`;
-                    document.getElementById('jobInfo').style.display = 'block';
-                    document.getElementById('candidateForm').style.display = 'block';
+                    applyJobInfo(data);
+                    if (identityVerificationRequired === false) {
+                        document.getElementById('candidateName').value = data.candidate_name || '';
+                        document.getElementById('candidateEmail').value = data.candidate_email || '';
+                        document.getElementById('candidateForm').style.display = 'none';
+                        document.getElementById('actionArea').style.display = 'none';
+                        candidateVerified = true;
+                        autoStarting = true;
+                        if (resumeReady) {
+                            await startInterview();
+                        } else {
+                            showPreparing(true);
+                            pollResumeReady(true);
+                        }
+                    } else {
+                        document.getElementById('candidateForm').style.display = 'block';
+                        if (resumeReady) {
+                            showPreparing(false);
+                        } else {
+                            document.getElementById('actionArea').style.display = 'none';
+                            showPreparing(true);
+                            pollResumeReady(false);
+                        }
+                    }
                 } else {
                     showError(data.error || '无法获取岗位信息');
                 }
@@ -303,27 +566,27 @@
                 showError('网络错误，请稍后重试');
             }
         }
-        
+
         async function verifyCandidate() {
             const name = document.getElementById('candidateName').value.trim();
             const email = document.getElementById('candidateEmail').value.trim();
-            
+
             if (!name) {
                 showError('请输入姓名');
                 return;
             }
-            
+
             if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 showError('请输入正确的邮箱');
                 return;
             }
-            
+
             const btn = document.getElementById('verifyBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span>验证中...';
-            
+
             try {
-                const response = await fetch('/api/interview/verify-identity/', {
+                const response = await fetch('/api/ai-interview/interview/verify-identity/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -334,14 +597,21 @@
                         email: email
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     candidateVerified = true;
                     document.getElementById('candidateForm').style.display = 'none';
-                    document.getElementById('actionArea').style.display = 'block';
                     showToast('身份验证成功', 'success');
+                    if (resumeReady) {
+                        showPreparing(false);
+                        document.getElementById('actionArea').style.display = 'block';
+                    } else {
+                        document.getElementById('actionArea').style.display = 'none';
+                        showPreparing(true);
+                        pollResumeReady(false);
+                    }
                 } else {
                     showError(data.error || '身份验证失败');
                 }
@@ -352,22 +622,24 @@
                 btn.innerHTML = '验证身份';
             }
         }
-        
+
         async function startInterview() {
             if (!candidateVerified) {
                 showError('请先验证身份');
                 return;
             }
-            
+
             const name = document.getElementById('candidateName').value.trim();
             const email = document.getElementById('candidateEmail').value.trim();
-            
+
             const btn = document.getElementById('startBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading-spinner"></span>正在进入面试...';
-            
+            if (!autoStarting) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span>正在进入面试...';
+            }
+
             try {
-                const response = await fetch('/api/interview/verify-and-start/', {
+                const response = await fetch('/api/ai-interview/interview/verify-and-start/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -378,29 +650,36 @@
                         email: email
                     })
                 });
-                
+
                 const data = await response.json();
-                
-                if (response.ok) {
+
+                if (response.status === 202) {
+                    resumeReady = false;
+                    showPreparing(true);
+                    document.getElementById('actionArea').style.display = 'none';
+                    pollResumeReady(autoStarting);
+                } else if (response.ok) {
                     sessionData = data;
                     showToast('即将进入面试...', 'success');
-                    
+
                     setTimeout(() => {
                         redirectToInterview(data);
-                    }, 1500);
+                    }, 1200);
                 } else {
                     showError(data.error || '进入面试失败');
                 }
             } catch (error) {
                 showError('网络错误，请稍后重试');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '开始面试';
+                if (!autoStarting) {
+                    btn.disabled = false;
+                    btn.innerHTML = '开始面试';
+                }
+                autoStarting = false;
             }
         }
-        
+
         function redirectToInterview(data) {
-            // 使用后端返回的面试页面URL，或者构建URL
             if (data.interview_url) {
                 window.location.href = data.interview_url;
             } else {
@@ -410,28 +689,93 @@
                     config_id: configId,
                     question: encodeURIComponent(data.question || '')
                 });
-                window.location.href = `/start-interview/?${params.toString()}`;
+                window.location.href = `/api/ai-interview/interview/?${params.toString()}`;
             }
         }
-        
+
+        async function refreshResumeStatus() {
+            const response = await fetch(`/api/ai-interview/interview/job-info/?config_id=${configId}`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || '无法获取面试准备状态');
+            }
+            applyJobInfo(data);
+            if (data.resume_parse_status === 'failed') {
+                throw new Error(data.resume_parse_error || '简历解析失败，请联系 HR');
+            }
+            return data;
+        }
+
+        function applyJobInfo(data) {
+            currentInterviewType = data.interview_type || currentInterviewType;
+            currentInterviewTypeLabel = currentInterviewType === 'discussion' ? '面谈' : '面试';
+            identityVerificationRequired = data.identity_verification_required !== false;
+            resumeReady = data.resume_ready !== false;
+
+            document.getElementById('jobName').textContent = data.job_name || '-';
+            const level = (data.job_level || '').trim() || '中级';
+            document.getElementById('jobDetails').textContent = `职级: ${level}`;
+            document.getElementById('jobInfo').style.display = 'block';
+
+            const preparingMessage = document.getElementById('preparingMessage');
+            if (preparingMessage) {
+                preparingMessage.textContent = `${currentInterviewTypeLabel}正在准备中，请稍等。`;
+            }
+        }
+
+        function pollResumeReady(shouldAutoStart) {
+            if (preparePollTimer) {
+                clearTimeout(preparePollTimer);
+            }
+            preparePollTimer = setTimeout(async () => {
+                try {
+                    await refreshResumeStatus();
+                    if (resumeReady) {
+                        showPreparing(false);
+                        showToast('面试已准备好', 'success');
+                        if (shouldAutoStart) {
+                            autoStarting = true;
+                            await startInterview();
+                        } else if (candidateVerified || !identityVerificationRequired) {
+                            document.getElementById('candidateForm').style.display = 'none';
+                            document.getElementById('actionArea').style.display = 'block';
+                        } else {
+                            document.getElementById('candidateForm').style.display = 'block';
+                            document.getElementById('actionArea').style.display = 'none';
+                        }
+                    } else {
+                        pollResumeReady(shouldAutoStart);
+                    }
+                } catch (error) {
+                    showPreparing(false);
+                    showError(error.message || '面试准备失败，请联系 HR');
+                }
+            }, 2500);
+        }
+
+        function showPreparing(show) {
+            const preparingMessage = document.getElementById('preparingMessage');
+            preparingMessage.classList.toggle('show', Boolean(show));
+        }
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
-            
+
             errorText.textContent = message;
             errorDiv.classList.add('show');
-            
+
             setTimeout(() => {
                 errorDiv.classList.remove('show');
             }, 5000);
         }
-        
+
         function showToast(message, type) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.remove();
             }, 3000);

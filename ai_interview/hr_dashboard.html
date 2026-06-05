@@ -1055,7 +1055,7 @@
                 </select>
             </label>
             <span class="user-pill">admin / superadmin</span>
-            <button type="button" class="logout-btn" data-i18n="logout">退出</button>
+            <button type="button" class="logout-btn" data-i18n="logout" onclick="location.href='/api/ai-interview/hr/logout/'">退出</button>
         </div>
     </header>
 
@@ -1067,9 +1067,21 @@
                     <strong data-i18n="generateInterview">生成面试</strong>
                     <span data-i18n="navGenerateDesc">上传原始文件并生成 AI 面试</span>
                 </a>
+                <a class="nav-item" href="/api/ai-interview/hr/batch/">
+                    <strong>批量生成面试</strong>
+                    <span>多份简历逐一解析并生成链接</span>
+                </a>
                 <a class="nav-item" href="/api/ai-interview/hr/candidates/">
                     <strong>候选人管理</strong>
                     <span>查看和管理所有候选人信息</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/token-dashboard/" data-admin-only style="display: none;">
+                    <strong>💎 词元计算台</strong>
+                    <span>追踪AI服务Token消耗</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/users/" data-admin-only style="display: none;">
+                    <strong>HR 用户管理</strong>
+                    <span>维护可登录 HR 工作台的用户</span>
                 </a>
             </nav>
         </aside>
@@ -1141,14 +1153,6 @@
                         <label>邮箱</label>
                         <input type="email" id="candidateEmail" placeholder="请输入候选人邮箱">
                     </div>
-                </div>
-                
-                <!-- 岗位信息 -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label data-i18n="jobName">岗位名称 *</label>
-                        <input type="text" id="jobName" placeholder="请输入岗位名称" data-i18n-placeholder="jobNamePlaceholder" required>
-                    </div>
                     <div class="form-group">
                         <label data-i18n="jobLevel">岗位级别</label>
                         <select id="jobLevel">
@@ -1161,11 +1165,31 @@
                     </div>
                 </div>
                 
+                <!-- 岗位信息 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-i18n="jobName">岗位名称 *</label>
+                        <input type="text" id="jobName" placeholder="请输入岗位名称" data-i18n-placeholder="jobNamePlaceholder" required>
+                    </div>
+                    <div class="form-group">
+                        <label>面试类别</label>
+                        <select id="interviewType">
+                            <option value="initial_interview" selected>初次面试</option>
+                            <option value="discussion">面谈</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label data-i18n="daysValid">有效天数</label>
-                        <input type="number" id="daysValid" value="30" min="1" max="365">
+                        <input type="number" id="daysValid" value="3" min="1" max="365">
                     </div>
+                </div>
+
+                <div class="form-group" id="recruitmentRequirementsGroup" style="display: none;">
+                    <label>招聘要求</label>
+                    <textarea id="recruitmentRequirements" placeholder="可选。留空时系统会根据岗位和简历自动生成面谈问题，例如岗位动机、岗位经验、技能匹配和学习准备。"></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -1174,7 +1198,7 @@
                 </div>
                 
                 <!-- 硬性字段 -->
-                <div class="form-group">
+                <div class="form-group" id="hardFieldsGroup">
                     <label data-i18n="hardFields">必问硬性字段</label>
                     <div class="hard-fields-grid">
                         <div class="hard-field-item">
@@ -1205,7 +1229,7 @@
                 </div>
                 
                 <!-- 自定义问题 -->
-                <div class="form-group">
+                <div class="form-group" id="customQuestionsGroup">
                     <label data-i18n="customQuestions">自定义问题</label>
                     <div id="customQuestionsContainer" class="custom-questions-container">
                         <div class="question-item">
@@ -1313,7 +1337,7 @@
                 educationBackground: '教育背景',
                 workExperience: '工作经历',
                 projectExperience: '项目经验',
-                notRecognized: '未识别',
+                notRecognized: '未提取到',
                 educationItem: '教育经历',
                 workExperienceItem: '工作经历',
                 projectItem: '项目',
@@ -1553,6 +1577,23 @@
                     }
                 });
             });
+
+            const interviewTypeSelect = document.getElementById('interviewType');
+            const recruitmentRequirementsGroup = document.getElementById('recruitmentRequirementsGroup');
+            const hardFieldsGroup = document.getElementById('hardFieldsGroup');
+            const customQuestionsGroup = document.getElementById('customQuestionsGroup');
+            const jobLevelGroup = document.getElementById('jobLevel').closest('.form-group');
+
+            function syncInterviewTypeFields() {
+                const isDiscussion = interviewTypeSelect.value === 'discussion';
+                recruitmentRequirementsGroup.style.display = isDiscussion ? 'block' : 'none';
+                hardFieldsGroup.style.display = isDiscussion ? 'none' : 'block';
+                customQuestionsGroup.style.display = isDiscussion ? 'none' : 'block';
+                jobLevelGroup.style.display = 'block';
+            }
+
+            interviewTypeSelect.addEventListener('change', syncInterviewTypeFields);
+            syncInterviewTypeFields();
             
             // 简历解析功能
             parseResumeBtn.addEventListener('click', async function() {
@@ -1629,44 +1670,74 @@
                 
                 const jobName = document.getElementById('jobName').value.trim();
                 const jobLevel = document.getElementById('jobLevel').value;
+                const interviewType = document.getElementById('interviewType').value;
+                const recruitmentRequirements = document.getElementById('recruitmentRequirements').value.trim();
                 const jobDescription = document.getElementById('jobDescription').value.trim();
                 const daysValid = parseInt(document.getElementById('daysValid').value);
                 const candidateName = document.getElementById('candidateName').value.trim();
                 const candidatePhone = document.getElementById('candidatePhone').value.trim();
                 const candidateEmail = document.getElementById('candidateEmail').value.trim();
                 
-                const hardFields = Array.from(document.querySelectorAll('input[name="hardFields"]:checked'))
+                const hardFields = interviewType === 'discussion' ? [] : Array.from(document.querySelectorAll('input[name="hardFields"]:checked'))
                     .map(el => el.value);
                 
-                const customQuestions = Array.from(document.querySelectorAll('.custom-question'))
-                    .map((el, index) => ({ [`q${index + 1}`]: el.value.trim() }))
-                    .reduce((acc, curr) => ({ ...acc, ...curr }), {});
+                const customQuestions = interviewType === 'discussion' ? [] : Array.from(document.querySelectorAll('.custom-question'))
+                    .map(el => el.value.trim())
+                    .filter(Boolean);
                 
                 const submitBtn = document.querySelector('.btn-submit');
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = loadingLabel('submitLoading');
                 
                 try {
-                    const response = await fetch('/api/hr/create-job/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            job_name: jobName,
-                            job_level: jobLevel,
-                            job_description: jobDescription,
-                            hard_fields: hardFields,
-                            custom_questions: customQuestions,
-                            days_valid: daysValid,
-                            max_interviews: 1,
-                            created_by: 'admin',
-                            candidate_name: candidateName,
-                            candidate_phone: candidatePhone,
-                            candidate_email: candidateEmail,
-                            resume_json: parsedResume || {}
-                        })
-                    });
+                    const selectedResumeFile = resumeFile.files[0];
+                    let requestOptions;
+                    if (!parsedResume && selectedResumeFile) {
+                        const formData = new FormData();
+                        formData.append('job_name', jobName);
+                        formData.append('interview_type', interviewType);
+                        formData.append('recruitment_requirements', recruitmentRequirements);
+                        formData.append('job_level', jobLevel);
+                        formData.append('job_description', jobDescription);
+                        hardFields.forEach(field => formData.append('hard_fields', field));
+                        customQuestions.forEach(question => formData.append('custom_questions', question));
+                        formData.append('days_valid', daysValid);
+                        formData.append('max_interviews', 1);
+                        formData.append('created_by', 'admin');
+                        formData.append('candidate_name', candidateName);
+                        formData.append('candidate_phone', candidatePhone);
+                        formData.append('candidate_email', candidateEmail);
+                        formData.append('resume_file', selectedResumeFile);
+                        requestOptions = {
+                            method: 'POST',
+                            body: formData
+                        };
+                    } else {
+                        requestOptions = {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                job_name: jobName,
+                                interview_type: interviewType,
+                                recruitment_requirements: recruitmentRequirements,
+                                job_level: jobLevel,
+                                job_description: jobDescription,
+                                hard_fields: hardFields,
+                                custom_questions: customQuestions,
+                                days_valid: daysValid,
+                                max_interviews: 1,
+                                created_by: 'admin',
+                                candidate_name: candidateName,
+                                candidate_phone: candidatePhone,
+                                candidate_email: candidateEmail,
+                                resume_json: parsedResume || {}
+                            })
+                        };
+                    }
+
+                    const response = await fetch('/api/ai-interview/hr/create-job/', requestOptions);
                     
                     const data = await response.json();
                     
@@ -1778,8 +1849,8 @@
             const educationText = formatEducation(data.education);
             const experienceText = formatExperience(data.experience);
             const projectsText = formatProjects(data.projects);
-            const skillsText = data.skills ? data.skills.slice(0, 10).join(', ') + (data.skills.length > 10 ? '...' : '') : t('notRecognized');
-            const certificatesText = data.certificates ? data.certificates.slice(0, 6).join(', ') + (data.certificates.length > 6 ? '...' : '') : t('notRecognized');
+            const skillsText = formatSimpleList(data.skills, 10);
+            const certificatesText = formatSimpleList(data.certificates, 6);
             
             container.innerHTML = `
                 <div class="resume-section">
@@ -1831,10 +1902,27 @@
                 return entities[char] || char;
             });
         }
+
+        function formatSimpleList(items, limit) {
+            if (!Array.isArray(items)) return t('notRecognized');
+            const values = items.map(item => String(item || '').trim()).filter(Boolean);
+            if (!values.length) return t('notRecognized');
+            return escapeHTML(values.slice(0, limit).join(', ') + (values.length > limit ? '...' : ''));
+        }
+
+        function hasObjectValue(item, fields) {
+            return item && fields.some(field => {
+                const value = item[field];
+                return Array.isArray(value) ? value.length : String(value || '').trim();
+            });
+        }
         
         function formatEducation(items) {
-            if (!Array.isArray(items) || !items.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
-            return items.map(item => `
+            const validItems = Array.isArray(items)
+                ? items.filter(item => hasObjectValue(item, ['school', 'degree', 'major', 'start_date', 'end_date', 'description']))
+                : [];
+            if (!validItems.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
+            return validItems.map(item => `
                 <div class="resume-list-item">
                     <div class="resume-list-item-title">${escapeHTML([item.school, item.degree, item.major].filter(Boolean).join(' / ') || item.description || t('educationItem'))}</div>
                     <div class="resume-list-item-meta">${escapeHTML([item.start_date, item.end_date].filter(Boolean).join(' - '))}</div>
@@ -1844,8 +1932,11 @@
         }
         
         function formatExperience(items) {
-            if (!Array.isArray(items) || !items.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
-            return items.map(item => `
+            const validItems = Array.isArray(items)
+                ? items.filter(item => hasObjectValue(item, ['company', 'position', 'start_date', 'end_date', 'description']))
+                : [];
+            if (!validItems.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
+            return validItems.map(item => `
                 <div class="resume-list-item">
                     <div class="resume-list-item-title">${escapeHTML([item.company, item.position].filter(Boolean).join(' / ') || t('workExperienceItem'))}</div>
                     <div class="resume-list-item-meta">${escapeHTML([item.start_date, item.end_date].filter(Boolean).join(' - '))}</div>
@@ -1855,15 +1946,36 @@
         }
         
         function formatProjects(items) {
-            if (!Array.isArray(items) || !items.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
-            return items.map(item => `
-                <div class="resume-list-item">
-                    <div class="resume-list-item-title">${escapeHTML(item.name || item.project_name || t('projectItem'))}</div>
-                    <div class="resume-list-item-meta">${escapeHTML([item.start_date, item.end_date, item.role].filter(Boolean).join(' | '))}</div>
-                    ${item.description ? `<div class="resume-list-item-desc">${escapeHTML(item.description)}</div>` : ''}
-                    ${item.tech_stack ? `<div style="font-size: 12px; color: #8f1022; margin-top: 4px;">${t('techStackPrefix')}: ${escapeHTML(item.tech_stack.join(', '))}</div>` : ''}
-                </div>
-            `).join('');
+            const validItems = Array.isArray(items)
+                ? items.filter(item => typeof item === 'string' ? item.trim() : hasObjectValue(item, ['name', 'project_name', 'role', 'start_date', 'end_date', 'description', 'responsibilities', 'achievements', 'content', 'details', 'technologies', 'tech_stack']))
+                : [];
+            if (!validItems.length) return `<p style="color: #999;">${t('notRecognized')}</p>`;
+            return validItems.map((rawItem, index) => {
+                const item = typeof rawItem === 'string' ? { name: rawItem } : (rawItem || {});
+                const technologies = Array.isArray(item.technologies)
+                    ? item.technologies
+                    : String(item.technologies || item.tech_stack || '').split(/[,，、/|；;]/).map(v => v.trim()).filter(Boolean);
+                const detailParts = [
+                    item.description,
+                    item.responsibilities,
+                    item.responsibility,
+                    item.duties,
+                    item.achievements,
+                    item.result,
+                    item.results,
+                    item.content,
+                    item.details
+                ].flat().filter(Boolean);
+                const detailText = detailParts.join('\n');
+                return `
+                    <div class="resume-list-item">
+                        <div class="resume-list-item-title">${escapeHTML(item.name || item.project_name || `${t('projectItem')}${index + 1}`)}</div>
+                        <div class="resume-list-item-meta">${escapeHTML([item.start_date, item.end_date, item.role].filter(Boolean).join(' | '))}</div>
+                        ${detailText ? `<div class="resume-list-item-desc">${escapeHTML(detailText).replace(/\\n/g, '<br>')}</div>` : ''}
+                        ${technologies.length ? `<div style="font-size: 12px; color: #8f1022; margin-top: 4px;">${t('techStackPrefix')}: ${escapeHTML(technologies.join(', '))}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
         }
         
         function showToast(message, type) {
@@ -1876,6 +1988,26 @@
                 toast.remove();
             }, 3000);
         }
+
+        async function applyAdminWorkspaceVisibility() {
+            try {
+                const pageToken = new URLSearchParams(window.location.search).get('token') || '';
+                const contextUrl = pageToken
+                    ? `/api/ai-interview/hr/auth-context/?token=${encodeURIComponent(pageToken)}`
+                    : '/api/ai-interview/hr/auth-context/';
+                const response = await fetch(contextUrl);
+                const data = await response.json();
+                if (response.ok && data.can_manage_hr_users) {
+                    document.querySelectorAll('[data-admin-only]').forEach(item => {
+                        item.style.display = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载权限信息失败:', error);
+            }
+        }
+
+        applyAdminWorkspaceVisibility();
     </script>
 </body>
 </html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量生成面试</title>
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --brand: #a5162a;
+            --brand-dark: #8f1022;
+            --brand-soft: #fff1f3;
+            --brand-border: #f2cdd3;
+            --text: #192333;
+            --muted: #6f7785;
+            --line: #dfe3e8;
+            --panel: #fff;
+            --canvas: #f5f6fa;
+            --sidebar: #fafbfe;
+            --success: #168a52;
+            --danger: #b42332;
+            --warning: #b7791f;
+            --shadow: 0 8px 20px rgba(28, 36, 48, 0.06);
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--canvas);
+            color: var(--text);
+            font: 14px/1.5 Arial, "Microsoft YaHei", sans-serif;
+        }
+        .app-topbar {
+            height: 60px;
+            background: linear-gradient(180deg, #af1a2e 0%, var(--brand-dark) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            box-shadow: 0 2px 10px rgba(114, 16, 29, 0.24);
+        }
+        .brand-title { font-size: 15px; font-weight: 800; }
+        .brand-subtitle { font-size: 11px; opacity: 0.78; }
+        .logout-btn {
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--brand-dark);
+            padding: 8px 14px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .app-shell {
+            display: grid;
+            grid-template-columns: 224px minmax(0, 1fr);
+            min-height: calc(100vh - 60px);
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #fff 0%, var(--sidebar) 100%);
+            border-right: 1px solid var(--line);
+            padding: 16px 14px 24px;
+        }
+        .nav-section-label { color: var(--muted); font-size: 12px; margin: 0 4px 14px; }
+        .nav-menu { display: grid; gap: 8px; }
+        .nav-item {
+            display: block;
+            padding: 11px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+        .nav-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+        .nav-item span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+        .nav-item:hover, .nav-item.active {
+            background: var(--brand-soft);
+            border-color: var(--brand-border);
+            color: var(--brand-dark);
+        }
+        .main-content { min-width: 0; padding: 18px 20px 24px; overflow: auto; }
+        .page-toolbar { margin-bottom: 14px; }
+        .page-title { font-size: 20px; line-height: 1.2; font-weight: 800; margin: 0 0 6px; }
+        .page-subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+        .panel h2 { margin: 0 0 16px; font-size: 16px; font-weight: 800; }
+        label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 13px; }
+        input, textarea, select {
+            width: 100%;
+            border: 1px solid #c8d2dd;
+            border-radius: 6px;
+            padding: 9px 10px;
+            font: inherit;
+            background: #fff;
+        }
+        textarea { min-height: 104px; resize: vertical; }
+        .mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .mode-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            background: #fff;
+        }
+        .mode-card input { width: auto; margin-right: 6px; }
+        .mode-card:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+        .file-box {
+            border: 1px dashed #b8c2cf;
+            border-radius: 8px;
+            padding: 14px;
+            background: #f8f9fb;
+        }
+        .file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .file-pick-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 8px;
+            background: var(--brand);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 14px rgba(165, 22, 42, 0.16);
+        }
+        .file-pick-btn:hover { background: var(--brand-dark); }
+        .file-hint { margin-top: 8px; color: var(--muted); font-size: 12px; }
+        .file-list { margin-top: 10px; display: grid; gap: 8px; }
+        .file-chip {
+            display: grid;
+            grid-template-columns: minmax(150px, 1fr) 28px;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #fff;
+            font-size: 13px;
+        }
+        .file-chip button {
+            border: 0;
+            background: transparent;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            background: var(--brand);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn.secondary { background: #526071; }
+        .btn.small { padding: 7px 10px; font-size: 12px; }
+        .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+        th { color: var(--muted); font-size: 12px; background: #f8f9fb; }
+        .status {
+            display: inline-flex;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .status.pending { color: var(--muted); background: #eef1f5; }
+        .status.running { color: var(--warning); background: #fff7e8; }
+        .status.success { color: var(--success); background: #edf9f2; }
+        .status.error { color: var(--danger); background: #fff0f0; }
+        .url-cell { word-break: break-all; }
+        .identity-cell { min-width: 150px; }
+        .identity-cell input { height: 32px; padding: 0 8px; font-size: 13px; }
+        .save-cell {
+            min-width: 96px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .save-actions {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+        .save-state {
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .toast {
+            display: none;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: #fff;
+            background: var(--success);
+        }
+        .toast.error { background: var(--danger); }
+        .progress-line { margin-top: 12px; color: var(--muted); font-size: 13px; }
+        @media (max-width: 980px) {
+            .app-shell { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .layout { grid-template-columns: 1fr; }
+            .file-chip { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-topbar">
+        <div>
+            <div class="brand-title">AI 面试管理台</div>
+            <div class="brand-subtitle">招聘运营中台</div>
+        </div>
+        <button type="button" class="logout-btn" onclick="location.href='/api/ai-interview/hr/logout/'">退出</button>
+    </header>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="nav-section-label">工作台</div>
+            <nav class="nav-menu" aria-label="主导航">
+                <a class="nav-item" href="/api/ai-interview/hr/">
+                    <strong>生成面试</strong>
+                    <span>上传原始文件并生成 AI 面试</span>
+                </a>
+                <a class="nav-item active" href="/api/ai-interview/hr/batch/">
+                    <strong>批量生成面试</strong>
+                    <span>多份简历直接生成链接</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/candidates/">
+                    <strong>候选人管理</strong>
+                    <span>查看和管理所有候选人信息</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/token-dashboard/" data-admin-only style="display: none;">
+                    <strong>词元计算台</strong>
+                    <span>追踪 AI 服务 Token 消耗</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/users/" data-admin-only style="display: none;">
+                    <strong>HR 用户管理</strong>
+                    <span>维护可登录 HR 工作台的用户</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-toolbar">
+                <h1 class="page-title">批量生成面试</h1>
+                <p class="page-subtitle">多选简历后立即生成面试链接；简历会在后台逐一解析，未完成前候选人端显示面试准备中。</p>
+            </div>
+
+            <div id="toast" class="toast"></div>
+
+            <div class="layout">
+                <section class="panel">
+                    <h2>批量配置</h2>
+                    <form id="batchForm">
+                        <label>生成类型</label>
+                        <div class="mode-row">
+                            <label class="mode-card">
+                                <input type="radio" name="interviewType" value="initial_interview" checked>
+                                批量生成面试
+                            </label>
+                            <label class="mode-card">
+                                <input type="radio" name="interviewType" value="discussion">
+                                批量生成面谈
+                            </label>
+                        </div>
+
+                        <label for="resumeFiles">简历文件 *</label>
+                        <div class="file-box">
+                            <input id="resumeFiles" class="file-input" type="file" multiple accept=".pdf,.doc,.docx">
+                            <label class="file-pick-btn" for="resumeFiles">选择简历文件</label>
+                            <div class="file-hint">*按住Ctrl后点击文件可以多选；再次选择会追加到当前列表</div>
+                            <div class="file-hint">选择文件时不用填写姓名和邮箱；面试ID生成后，在右侧生成结果中填写并保存回填。</div>
+                            <div id="selectedFileList" class="file-list"></div>
+                        </div>
+
+                        <label for="jobName">岗位名称 *</label>
+                        <input id="jobName" required placeholder="请输入岗位名称">
+
+                        <label for="jobLevel">岗位级别</label>
+                        <select id="jobLevel">
+                            <option value="初级">初级</option>
+                            <option value="中级" selected>中级</option>
+                            <option value="高级">高级</option>
+                            <option value="专家">专家</option>
+                        </select>
+
+                        <label for="daysValid">链接有效期（天）</label>
+                        <input id="daysValid" type="number" min="1" value="3">
+
+                        <label for="jobDescription">岗位描述 JD</label>
+                        <textarea id="jobDescription" placeholder="请输入岗位描述"></textarea>
+
+                        <div id="discussionRequirementsGroup" style="display: none;">
+                            <label for="recruitmentRequirements">面谈招聘要求</label>
+                            <textarea id="recruitmentRequirements" placeholder="批量生成面谈时使用，可选"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="startBatchBtn" class="btn" type="submit">开始批量生成</button>
+                            <button class="btn secondary" type="button" onclick="resetBatch()">清空结果</button>
+                        </div>
+                        <div id="progressLine" class="progress-line"></div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <h2>生成结果</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>文件</th>
+                                <th>候选人</th>
+                                <th>邮箱</th>
+                                <th>保存</th>
+                                <th>状态</th>
+                                <th>面试链接</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultRows"></tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const pageToken = new URLSearchParams(window.location.search).get('token') || '';
+        let selectedFiles = [];
+        let batchRows = [];
+
+        function apiUrl(path) {
+            if (!pageToken) return path;
+            const separator = path.includes('?') ? '&' : '?';
+            return `${path}${separator}token=${encodeURIComponent(pageToken)}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2600);
+        }
+
+        function updateInterviewTypeFields() {
+            const selectedType = document.querySelector('input[name="interviewType"]:checked')?.value || 'initial_interview';
+            const group = document.getElementById('discussionRequirementsGroup');
+            if (!group) return;
+            group.style.display = selectedType === 'discussion' ? 'block' : 'none';
+        }
+
+        function addSelectedFiles(files) {
+            files.forEach(file => {
+                const key = `${file.name}_${file.size}_${file.lastModified}`;
+                const exists = selectedFiles.some(item => `${item.file.name}_${item.file.size}_${item.file.lastModified}` === key);
+                if (!exists) {
+                    selectedFiles.push({ file });
+                }
+            });
+            renderSelectedFiles();
+        }
+
+        function removeSelectedFile(index) {
+            selectedFiles.splice(index, 1);
+            renderSelectedFiles();
+        }
+
+        function renderSelectedFiles() {
+            const list = document.getElementById('selectedFileList');
+            if (!selectedFiles.length) {
+                list.innerHTML = '<div class="file-hint">尚未选择文件</div>';
+                return;
+            }
+            list.innerHTML = selectedFiles.map((item, index) => `
+                <div class="file-chip">
+                    <span>${escapeHtml(item.file.name)}</span>
+                    <button type="button" aria-label="移除文件" onclick="removeSelectedFile(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function resetBatch() {
+            selectedFiles = [];
+            batchRows = [];
+            document.getElementById('resumeFiles').value = '';
+            document.getElementById('progressLine').textContent = '';
+            renderSelectedFiles();
+            renderRows();
+        }
+
+        function renderRows() {
+            const tbody = document.getElementById('resultRows');
+            tbody.innerHTML = batchRows.map(row => `
+                <tr>
+                    <td>${escapeHtml(row.fileName)}</td>
+                    <td class="identity-cell">
+                        <input value="${escapeAttr(row.name || '')}" placeholder="姓名" oninput="updateBatchRowField(${row.index}, 'name', this.value)" ${row.configId ? '' : 'disabled'}>
+                    </td>
+                    <td class="identity-cell">
+                        <input value="${escapeAttr(row.email || '')}" placeholder="邮箱" oninput="updateBatchRowField(${row.index}, 'email', this.value)" ${row.configId ? '' : 'disabled'}>
+                    </td>
+                    <td class="save-cell">
+                        <div class="save-actions">
+                            <button class="btn small secondary" type="button" onclick="saveCandidateInfo(${row.index})" ${row.configId ? '' : 'disabled'}>保存</button>
+                            <span class="save-state">${escapeHtml(row.saveText || '')}</span>
+                        </div>
+                    </td>
+                    <td><span class="status ${row.status}">${escapeHtml(row.statusText)}</span></td>
+                    <td class="url-cell">${row.url ? `<a href="${escapeAttr(row.url)}" target="_blank">${escapeHtml(row.url)}</a>` : escapeHtml(row.message || '')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateBatchRowField(index, field, value) {
+            const row = batchRows.find(item => item.index === index);
+            if (!row) return;
+            row[field] = value;
+            row.identityTouched = true;
+            row.saveText = row.configId ? '未保存' : '';
+        }
+
+        async function createInterview(row, formValues) {
+            const formData = new FormData();
+            formData.append('job_name', formValues.jobName);
+            formData.append('interview_type', formValues.interviewType);
+            formData.append('recruitment_requirements', formValues.recruitmentRequirements);
+            formData.append('job_level', formValues.jobLevel);
+            formData.append('job_description', formValues.jobDescription);
+            formData.append('days_valid', formValues.daysValid);
+            formData.append('max_interviews', 1);
+            formData.append('created_by', 'batch');
+            formData.append('allow_pending_candidate', 'true');
+            formData.append('candidate_name', '');
+            formData.append('candidate_email', '');
+            formData.append('resume_file', row.file);
+
+            const response = await fetch(apiUrl('/api/ai-interview/hr/create-job/'), {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || '创建面试失败');
+            }
+            return data;
+        }
+
+        async function saveCandidateInfo(rowIndex) {
+            const row = batchRows.find(item => item.index === rowIndex);
+            if (!row || !row.configId) return;
+            const name = (row.name || '').trim();
+            const email = (row.email || '').trim();
+            if (!name) {
+                showToast('请填写候选人姓名', 'error');
+                return;
+            }
+            if (!email) {
+                showToast('请填写候选人邮箱', 'error');
+                return;
+            }
+
+            row.saveText = '保存中...';
+            renderRows();
+            try {
+                const response = await fetch(apiUrl('/api/ai-interview/hr/candidates/update/'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        config_id: row.configId,
+                        candidate_id: row.configId,
+                        name,
+                        email
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || '保存失败');
+                }
+                row.name = data.candidate_name || name;
+                row.email = data.candidate_email || email;
+                row.identityTouched = true;
+                row.identitySaved = true;
+                row.saveText = '已回填';
+                showToast('候选人信息已回填到数据库');
+            } catch (error) {
+                row.saveText = '保存失败';
+                showToast(error.message, 'error');
+            }
+            renderRows();
+        }
+
+        function pollResumeIdentity(rowIndex, attempt = 0) {
+            const row = batchRows.find(item => item.index === rowIndex);
+            if (!row || !row.configId || row.identitySaved || row.identityTouched || attempt >= 24) return;
+
+            window.setTimeout(async () => {
+                const latestRow = batchRows.find(item => item.index === rowIndex);
+                if (!latestRow || latestRow.identitySaved || latestRow.identityTouched) return;
+                try {
+                    const response = await fetch(apiUrl(`/api/ai-interview/interview/job-info/?config_id=${encodeURIComponent(latestRow.configId)}`));
+                    const data = await response.json();
+                    if (response.ok) {
+                        if (!latestRow.identityTouched) {
+                            latestRow.name = data.candidate_name || latestRow.name || '';
+                            latestRow.email = data.candidate_email || latestRow.email || '';
+                            if (latestRow.name || latestRow.email) {
+                                latestRow.saveText = '已自动回填';
+                            }
+                        }
+                        if (data.resume_parse_status === 'completed' || data.resume_parse_status === 'failed') {
+                            renderRows();
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('轮询简历解析状态失败:', error);
+                }
+                renderRows();
+                pollResumeIdentity(rowIndex, attempt + 1);
+            }, 5000);
+        }
+
+        document.getElementById('batchForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!selectedFiles.length) {
+                showToast('请选择简历文件', 'error');
+                return;
+            }
+
+            const formValues = {
+                interviewType: document.querySelector('input[name="interviewType"]:checked').value,
+                jobName: document.getElementById('jobName').value.trim(),
+                jobLevel: document.getElementById('jobLevel').value,
+                daysValid: parseInt(document.getElementById('daysValid').value || '3', 10),
+                jobDescription: document.getElementById('jobDescription').value.trim(),
+                recruitmentRequirements: document.getElementById('recruitmentRequirements').value.trim()
+            };
+            if (!formValues.jobName) {
+                showToast('请输入岗位名称', 'error');
+                return;
+            }
+
+            batchRows = selectedFiles.map((item, index) => ({
+                index,
+                file: item.file,
+                fileName: item.file.name,
+                name: '',
+                email: '',
+                configId: '',
+                status: 'pending',
+                statusText: '等待',
+                url: '',
+                message: '',
+                saveText: '',
+                identityTouched: false,
+                identitySaved: false
+            }));
+            renderRows();
+
+            const startButton = document.getElementById('startBatchBtn');
+            startButton.disabled = true;
+            let successCount = 0;
+
+            try {
+                for (let index = 0; index < batchRows.length; index += 1) {
+                    const row = batchRows[index];
+                    row.status = 'running';
+                    row.statusText = '生成中';
+                    document.getElementById('progressLine').textContent = `处理中 ${index + 1}/${batchRows.length}: ${row.fileName}`;
+                    renderRows();
+
+                    try {
+                        const created = await createInterview(row, formValues);
+                        row.configId = created.config_id || '';
+                        row.name = created.candidate_name || '';
+                        row.email = created.candidate_email || '';
+                        row.status = 'success';
+                        row.statusText = created.resume_parse_status === 'processing' ? '准备中' : '成功';
+                        row.url = created.interview_url || '';
+                        row.message = created.resume_parse_status === 'processing' ? '面试ID已生成，简历准备中' : (created.message || '');
+                        row.saveText = '可回填';
+                        if (created.resume_parse_status === 'processing') {
+                            pollResumeIdentity(row.index);
+                        }
+                        successCount += 1;
+                    } catch (error) {
+                        row.status = 'error';
+                        row.statusText = '失败';
+                        row.message = error.message;
+                    }
+                    renderRows();
+                }
+                document.getElementById('progressLine').textContent = `完成：成功 ${successCount}/${batchRows.length}`;
+                showToast(`批量生成完成：成功 ${successCount}/${batchRows.length}`);
+            } finally {
+                startButton.disabled = false;
+            }
+        });
+
+        document.getElementById('resumeFiles').addEventListener('change', event => {
+            addSelectedFiles(Array.from(event.target.files || []));
+            event.target.value = '';
+        });
+
+        document.querySelectorAll('input[name="interviewType"]').forEach(input => {
+            input.addEventListener('change', updateInterviewTypeFields);
+        });
+
+        async function applyAdminWorkspaceVisibility() {
+            try {
+                const response = await fetch(apiUrl('/api/ai-interview/hr/auth-context/'));
+                const data = await response.json();
+                if (response.ok && data.can_manage_hr_users) {
+                    document.querySelectorAll('[data-admin-only]').forEach(item => {
+                        item.style.display = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载权限信息失败:', error);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value).replace(/`/g, '&#96;');
+        }
+
+        renderSelectedFiles();
+        renderRows();
+        updateInterviewTypeFields();
+        applyAdminWorkspaceVisibility();
+    </script>
+</body>
+</html>

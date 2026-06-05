@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词元计算台 - AI面试系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Admin console skin inspired by the provided talent-library pages. */
+        :root {
+            --brand: #a5162a;
+            --brand-dark: #8f1022;
+            --brand-soft: #fff1f3;
+            --brand-border: #f2cdd3;
+            --text: #192333;
+            --muted: #6f7785;
+            --line: #dfe3e8;
+            --panel: #ffffff;
+            --canvas: #f5f6fa;
+            --sidebar: #fafbfe;
+            --success: #168a52;
+            --success-soft: #edf9f2;
+            --danger: #b42332;
+            --warning: #b7791f;
+            --shadow: 0 8px 20px rgba(28, 36, 48, 0.06);
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 0;
+            background: var(--canvas);
+            color: var(--text);
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .app-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 60px;
+            background: linear-gradient(180deg, #af1a2e 0%, var(--brand-dark) 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            box-shadow: 0 2px 10px rgba(114, 16, 29, 0.24);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.14);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            opacity: 0.78;
+            margin-top: 2px;
+        }
+
+        .topbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .user-pill {
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--brand-dark);
+            padding: 8px 14px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 224px minmax(0, 1fr);
+            min-height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #fff 0%, var(--sidebar) 100%);
+            border-right: 1px solid var(--line);
+            padding: 16px 14px 24px;
+        }
+
+        .nav-section-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 0 4px 14px;
+        }
+
+        .nav-menu {
+            display: grid;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 11px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-item strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--brand-soft);
+            border-color: var(--brand-border);
+            color: var(--brand-dark);
+        }
+
+        .main-content {
+            min-width: 0;
+            padding: 18px 20px 24px;
+            overflow: auto;
+        }
+
+        .page-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            line-height: 1.2;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: none;
+            margin: 0;
+            height: calc(100vh - 152px);
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+        }
+
+        .form-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+            min-width: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-panel h2 {
+            position: relative;
+            color: var(--text);
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            padding: 0 0 12px 12px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .form-panel h2::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 4px;
+            height: 16px;
+            border-radius: 999px;
+            background: var(--brand);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fb;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.total {
+            background: linear-gradient(135deg, #a5162a 0%, var(--brand-dark) 100%);
+        }
+
+        .stat-icon.resume {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+
+        .stat-icon.omni {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        .stat-icon.analysis {
+            background: linear-gradient(135deg, #38a169 0%, #319795 100%);
+        }
+
+        .stat-icon.cost {
+            background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        }
+
+        .stat-value.cost-value {
+            color: #805ad5;
+            font-weight: 700;
+        }
+
+        .billing-notes {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--canvas);
+            border-radius: 12px;
+            border: 1px solid var(--line);
+        }
+
+        .billing-notes h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .billing-notes .note-section {
+            margin-bottom: 20px;
+        }
+
+        .billing-notes .note-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .billing-notes h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .billing-notes table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .billing-notes th,
+        .billing-notes td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .billing-notes th {
+            background: var(--brand-soft);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .billing-notes tr:hover td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .billing-notes .small-note {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            padding: 8px 12px;
+            background: rgba(237, 137, 54, 0.08);
+            border-radius: 6px;
+            border-left: 3px solid #ed8936;
+        }
+
+        .category-card.total {
+            background: var(--brand-soft);
+            font-weight: 600;
+        }
+
+        .category-card.total .category-value.total-cost {
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .category-cards {
+            margin-top: 16px;
+        }
+
+        .category-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--line);
+            display: grid;
+            grid-template-columns: 52px 1fr 150px 120px 120px 120px 80px;
+            align-items: center;
+            gap: 16px;
+            transition: background 0.2s ease;
+        }
+
+        .category-card:hover {
+            background: var(--brand-soft);
+        }
+
+        .category-card:last-child {
+            border-bottom: none;
+        }
+
+        .category-card.header {
+            background: var(--canvas);
+            font-weight: 700;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 12px 16px;
+        }
+
+        .category-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .category-icon.resume {
+            background: rgba(66, 153, 225, 0.1);
+            color: #4299e1;
+        }
+
+        .category-icon.omni {
+            background: rgba(237, 137, 54, 0.1);
+            color: #ed8936;
+        }
+
+        .category-icon.analysis {
+            background: rgba(56, 161, 105, 0.1);
+            color: #38a169;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .category-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+        .category-value.small {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .error {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toolbar-action {
+            border: none;
+            border-radius: 8px;
+            background: var(--brand);
+            color: #fff;
+            padding: 10px 18px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 14px rgba(165, 22, 42, 0.18);
+        }
+
+        .toolbar-action:hover {
+            background: var(--brand-dark);
+        }
+
+        .toolbar-action.danger {
+            background: var(--danger);
+            box-shadow: 0 6px 14px rgba(180, 35, 50, 0.18);
+        }
+
+        .toolbar-action.danger:hover {
+            background: #9a1e2b;
+        }
+
+        @media (max-width: 900px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .category-card {
+                grid-template-columns: 48px 1fr;
+                gap: 12px;
+            }
+
+            .category-card .category-value {
+                display: none;
+            }
+
+            .category-card.header {
+                display: none;
+            }
+        }
+
+        .billing-notes {
+            margin-top: 16px;
+        }
+
+        .billing-notes h3 {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header class="app-topbar">
+        <div class="brand">
+            <div class="brand-mark">T</div>
+            <div>
+                <div class="brand-title">AI 面试管理台</div>
+                <div class="brand-subtitle">招聘运营中台</div>
+            </div>
+        </div>
+        <div class="topbar-controls">
+            <span class="user-pill">admin / superadmin</span>
+            <button type="button" class="logout-btn" onclick="location.href='/api/ai-interview/hr/logout/'">退出</button>
+        </div>
+    </header>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="nav-section-label">工作台</div>
+            <nav class="nav-menu" aria-label="主导航">
+                <a class="nav-item" href="/api/ai-interview/hr/">
+                    <strong>生成面试</strong>
+                    <span>上传原始文件并生成 AI 面试</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/batch/">
+                    <strong>批量生成面试</strong>
+                    <span>多份简历逐一解析并生成链接</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/candidates/">
+                    <strong>候选人管理</strong>
+                    <span>查看和管理所有候选人信息</span>
+                </a>
+                <a class="nav-item active" href="/api/ai-interview/hr/token-dashboard/">
+                    <strong>💎 词元计算台</strong>
+                    <span>追踪AI服务Token消耗</span>
+                </a>
+                <a class="nav-item" href="/api/ai-interview/hr/users/" data-admin-only style="display: none;">
+                    <strong>HR 用户管理</strong>
+                    <span>维护可登录 HR 工作台的用户</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-toolbar">
+                <div>
+                    <h1 class="page-title">💎 词元计算台</h1>
+                    <p class="page-subtitle">实时追踪AI服务Token使用情况，包括简历解析、Omni语音面试和回答分析。</p>
+                </div>
+                <div class="btn-group">
+                    <button class="toolbar-action" onclick="refreshStats()">🔄 刷新数据</button>
+                    <button class="toolbar-action danger" onclick="clearAllStats()">🗑️ 清除数据</button>
+                </div>
+            </div>
+
+            <div class="container">
+                <div class="form-panel">
+                    <h2>概览统计</h2>
+                    <div id="error" class="error" style="display: none;"></div>
+
+                    <div id="loading" class="loading">
+                        正在加载统计数据...
+                    </div>
+
+                    <div id="stats" style="display: none;">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon total">
+                                    <span style="color: #fff;">📊</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="totalTokens">0</div>
+                                    <div class="stat-label">总Token消耗</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon resume">
+                                    <span style="color: #fff;">📄</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="resumeTokens">0</div>
+                                    <div class="stat-label">简历解析</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon omni">
+                                    <span style="color: #fff;">🎙️</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="omniTokens">0</div>
+                                    <div class="stat-label">Omni语音面试</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon analysis">
+                                    <span style="color: #fff;">🔍</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="analysisTokens">0</div>
+                                    <div class="stat-label">回答分析</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon analysis">
+                                    <span style="color: #fff;">💬</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="feishuTokens">0</div>
+                                    <div class="stat-label">飞书</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon cost">
+                                    <span style="color: #fff;">💰</span>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value cost-value" id="overviewCost">¥0.00</div>
+                                    <div class="stat-label">总费用预估</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2>详细统计</h2>
+                        <div class="category-cards">
+                            <div class="category-card header">
+                                <div>类别</div>
+                                <div>名称</div>
+                                <div>使用模型</div>
+                                <div>总Token</div>
+                                <div>输入Token</div>
+                                <div>输出Token</div>
+                                <div>调用次数</div>
+                            </div>
+                            <div id="categoryResume" class="category-card">
+                                <div class="category-icon resume">📄</div>
+                                <div class="category-name">简历解析</div>
+                                <div class="category-value small" id="resumeModel">-</div>
+                                <div class="category-value" id="resumeTotal">0</div>
+                                <div class="category-value small" id="resumeInput">0</div>
+                                <div class="category-value small" id="resumeOutput">0</div>
+                                <div class="category-value small" id="resumeCalls">0</div>
+                            </div>
+                            <div id="categoryJobMatch" class="category-card">
+                                <div class="category-icon resume">%</div>
+                                <div class="category-name">简历/岗位匹配度</div>
+                                <div class="category-value small" id="jobMatchModel">-</div>
+                                <div class="category-value" id="jobMatchTotal">0</div>
+                                <div class="category-value small" id="jobMatchInput">0</div>
+                                <div class="category-value small" id="jobMatchOutput">0</div>
+                                <div class="category-value small" id="jobMatchCalls">0</div>
+                            </div>
+                            <div id="categoryOmni" class="category-card">
+                                <div class="category-icon omni">🎙️</div>
+                                <div class="category-name">Omni语音面试</div>
+                                <div class="category-value small" id="omniModel">-</div>
+                                <div class="category-value" id="omniTotal">0</div>
+                                <div class="category-value small" id="omniInput">0</div>
+                                <div class="category-value small" id="omniOutput">0</div>
+                                <div class="category-value small" id="omniCalls">0</div>
+                            </div>
+                            <div id="categoryOmniInitial" class="category-card">
+                                <div class="category-icon omni">↳</div>
+                                <div class="category-name">Omni 初次面试</div>
+                                <div class="category-value small" id="omniInitialModel">-</div>
+                                <div class="category-value" id="omniInitialTotal">0</div>
+                                <div class="category-value small" id="omniInitialInput">0</div>
+                                <div class="category-value small" id="omniInitialOutput">0</div>
+                                <div class="category-value small" id="omniInitialCalls">0</div>
+                            </div>
+                            <div id="categoryOmniDiscussion" class="category-card">
+                                <div class="category-icon omni">↳</div>
+                                <div class="category-name">Omni 面谈</div>
+                                <div class="category-value small" id="omniDiscussionModel">-</div>
+                                <div class="category-value" id="omniDiscussionTotal">0</div>
+                                <div class="category-value small" id="omniDiscussionInput">0</div>
+                                <div class="category-value small" id="omniDiscussionOutput">0</div>
+                                <div class="category-value small" id="omniDiscussionCalls">0</div>
+                            </div>
+                            <div id="categoryAnalysis" class="category-card">
+                                <div class="category-icon analysis">🔍</div>
+                                <div class="category-name">回答分析</div>
+                                <div class="category-value small" id="analysisModel">-</div>
+                                <div class="category-value" id="analysisTotal">0</div>
+                                <div class="category-value small" id="analysisInput">0</div>
+                                <div class="category-value small" id="analysisOutput">0</div>
+                                <div class="category-value small" id="analysisCalls">0</div>
+                            </div>
+                            <div id="categoryFeishu" class="category-card">
+                                <div class="category-icon analysis">💬</div>
+                                <div class="category-name">飞书</div>
+                                <div class="category-value small" id="feishuModel">-</div>
+                                <div class="category-value" id="feishuTotal">0</div>
+                                <div class="category-value small" id="feishuInput">0</div>
+                                <div class="category-value small" id="feishuOutput">0</div>
+                                <div class="category-value small" id="feishuCalls">0</div>
+                            </div>
+                        </div>
+
+                        <h2>费用预估</h2>
+                        <div class="category-cards">
+                            <div class="category-card header">
+                                <div>类别</div>
+                                <div>使用模型</div>
+                                <div>输入费用(元)</div>
+                                <div>输出费用(元)</div>
+                                <div>总计(元)</div>
+                            </div>
+                            <div id="costResume" class="category-card">
+                                <div class="category-icon resume">📄</div>
+                                <div class="category-name">简历解析</div>
+                                <div class="category-value small" id="resumeCostInput">0.00</div>
+                                <div class="category-value small" id="resumeCostOutput">0.00</div>
+                                <div class="category-value" id="resumeCostTotal">0.00</div>
+                            </div>
+                            <div id="costJobMatch" class="category-card">
+                                <div class="category-icon resume">%</div>
+                                <div class="category-name">简历/岗位匹配度</div>
+                                <div class="category-value small" id="jobMatchCostInput">0.00</div>
+                                <div class="category-value small" id="jobMatchCostOutput">0.00</div>
+                                <div class="category-value" id="jobMatchCostTotal">0.00</div>
+                            </div>
+                            <div id="costOmni" class="category-card">
+                                <div class="category-icon omni">🎙️</div>
+                                <div class="category-name">Omni语音面试</div>
+                                <div class="category-value small" id="omniCostInput">0.00</div>
+                                <div class="category-value small" id="omniCostOutput">0.00</div>
+                                <div class="category-value" id="omniCostTotal">0.00</div>
+                            </div>
+                            <div id="costOmniInitial" class="category-card">
+                                <div class="category-icon omni">↳</div>
+                                <div class="category-name">Omni 初次面试</div>
+                                <div class="category-value small" id="omniInitialCostInput">0.00</div>
+                                <div class="category-value small" id="omniInitialCostOutput">0.00</div>
+                                <div class="category-value" id="omniInitialCostTotal">0.00</div>
+                            </div>
+                            <div id="costOmniDiscussion" class="category-card">
+                                <div class="category-icon omni">↳</div>
+                                <div class="category-name">Omni 面谈</div>
+                                <div class="category-value small" id="omniDiscussionCostInput">0.00</div>
+                                <div class="category-value small" id="omniDiscussionCostOutput">0.00</div>
+                                <div class="category-value" id="omniDiscussionCostTotal">0.00</div>
+                            </div>
+                            <div id="costAnalysis" class="category-card">
+                                <div class="category-icon analysis">🔍</div>
+                                <div class="category-name">回答分析</div>
+                                <div class="category-value small" id="analysisCostInput">0.00</div>
+                                <div class="category-value small" id="analysisCostOutput">0.00</div>
+                                <div class="category-value" id="analysisCostTotal">0.00</div>
+                            </div>
+                            <div id="costFeishu" class="category-card">
+                                <div class="category-icon analysis">💬</div>
+                                <div class="category-name">飞书</div>
+                                <div class="category-value small" id="feishuCostInput">0.00</div>
+                                <div class="category-value small" id="feishuCostOutput">0.00</div>
+                                <div class="category-value" id="feishuCostTotal">0.00</div>
+                            </div>
+                            <div class="category-card total">
+                                <div></div>
+                                <div class="category-name">合计费用</div>
+                                <div></div>
+                                <div></div>
+                                <div class="category-value total-cost" id="totalCost">0.00</div>
+                            </div>
+                        </div>
+
+                        <div class="billing-notes">
+                            <h3>计费说明</h3>
+                            <div class="note-section">
+                                <h4>qwen-plus (文本模型)</h4>
+                                <table>
+                                    <tr><th>输入Token范围</th><th>输入单价(元/百万)</th><th>输出单价-非思考模式(元/百万)</th><th>输出单价-思考模式(元/百万)</th></tr>
+                                    <tr><td>0 < Token ≤ 128K</td><td>0.8</td><td>2.0</td><td>8.0</td></tr>
+                                    <tr><td>128K < Token ≤ 256K</td><td>2.4</td><td>20.0</td><td>24.0</td></tr>
+                                    <tr><td>256K < Token ≤ 1M</td><td>4.8</td><td>48.0</td><td>64.0</td></tr>
+                                </table>
+                            </div>
+                            <div class="note-section">
+                                <h4>qwen3.7-plus (简历/岗位匹配度，关闭思考模式)</h4>
+                                <table>
+                                    <tr><th>输入 Token 范围</th><th>输入单价（每百万 Token）</th><th>输出单价（非思考模式）</th><th>输出单价（思考模式）</th></tr>
+                                    <tr><td>0 < Token ≤ 256K</td><td>2 元</td><td>8 元</td><td>8 元</td></tr>
+                                    <tr><td>256K < Token ≤ 1M</td><td>6 元</td><td>24 元</td><td>24 元</td></tr>
+                                </table>
+                            </div>
+                            <div class="note-section">
+                                <h4>qwen3.5-omni-plus-realtime (语音模型)</h4>
+                                <table>
+                                    <tr><th>类型</th><th>单价(元/百万tokens)</th></tr>
+                                    <tr><td>输入: 音频</td><td>80</td></tr>
+                                    <tr><td>输入: 文本</td><td>10</td></tr>
+                                    <tr><td>输出: 文本+音频</td><td>300</td></tr>
+                                    <tr><td>输出: 文本</td><td>60</td></tr>
+                                </table>
+                                <p class="small-note">备注：本系统仅使用语音和文本，不包含图片和视频</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadStats() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const stats = document.getElementById('stats');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            stats.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/ai-interview/hr/token-dashboard/data/');
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || '加载失败');
+                }
+
+                displayStats(result.data);
+
+                loading.style.display = 'none';
+                stats.style.display = 'block';
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = err.message;
+            }
+        }
+
+        function displayStats(data) {
+            document.getElementById('totalTokens').textContent = formatNumber(data.total.total_tokens);
+            resetOmniBranches();
+
+            const categoryMap = {
+                'resume_parsing': { prefix: 'resume', icon: '📄', defaultModel: 'qwen-flash' },
+                'job_match': { prefix: 'jobMatch', icon: '%', defaultModel: 'qwen3.7-plus' },
+                'omni_interview': { prefix: 'omni', icon: '🎙️', defaultModel: 'qwen3.5-omni-plus-realtime' },
+                'answer_analysis': { prefix: 'analysis', icon: '🔍', defaultModel: 'qwen-flash' },
+                'feishu_assistant': { prefix: 'feishu', icon: '💬', defaultModel: 'qwen3.7-plus' }
+            };
+
+            let totalCost = 0;
+
+            data.categories.forEach(category => {
+                const info = categoryMap[category.category];
+                if (!info) return;
+
+                const overviewTokenElement = document.getElementById(`${info.prefix}Tokens`);
+                if (overviewTokenElement) {
+                    overviewTokenElement.textContent = formatNumber(category.total_tokens);
+                }
+                document.getElementById(`${info.prefix}Total`).textContent = formatNumber(category.total_tokens);
+                document.getElementById(`${info.prefix}Input`).textContent = formatNumber(category.input_tokens);
+                document.getElementById(`${info.prefix}Output`).textContent = formatNumber(category.output_tokens);
+                document.getElementById(`${info.prefix}Calls`).textContent = category.call_count;
+                
+                const modelElement = document.getElementById(`${info.prefix}Model`);
+                if (modelElement) {
+                    modelElement.textContent = category.model || info.defaultModel || '-';
+                }
+
+                const model = category.model || info.defaultModel;
+                const { inputCost, outputCost, total } = calculateCost(category.input_tokens, category.output_tokens, model);
+                
+                document.getElementById(`${info.prefix}CostInput`).textContent = inputCost.toFixed(4);
+                document.getElementById(`${info.prefix}CostOutput`).textContent = outputCost.toFixed(4);
+                document.getElementById(`${info.prefix}CostTotal`).textContent = total.toFixed(4);
+                
+                totalCost += total;
+
+                if (category.category === 'omni_interview') {
+                    displayOmniBranches(category.branches || [], info.defaultModel);
+                }
+            });
+
+            document.getElementById('totalCost').textContent = totalCost.toFixed(4);
+            document.getElementById('overviewCost').textContent = '¥' + totalCost.toFixed(4);
+        }
+
+        function resetOmniBranches() {
+            ['Initial', 'Discussion'].forEach(name => {
+                const prefix = `omni${name}`;
+                document.getElementById(`${prefix}Model`).textContent = '-';
+                document.getElementById(`${prefix}Total`).textContent = '0';
+                document.getElementById(`${prefix}Input`).textContent = '0';
+                document.getElementById(`${prefix}Output`).textContent = '0';
+                document.getElementById(`${prefix}Calls`).textContent = '0';
+                document.getElementById(`${prefix}CostInput`).textContent = '0.00';
+                document.getElementById(`${prefix}CostOutput`).textContent = '0.00';
+                document.getElementById(`${prefix}CostTotal`).textContent = '0.00';
+            });
+        }
+
+        function displayOmniBranches(branches, defaultModel) {
+            const prefixMap = {
+                initial_interview: 'omniInitial',
+                discussion: 'omniDiscussion'
+            };
+            branches.forEach(branch => {
+                const prefix = prefixMap[branch.interview_type];
+                if (!prefix) return;
+                document.getElementById(`${prefix}Model`).textContent = branch.model || defaultModel || '-';
+                document.getElementById(`${prefix}Total`).textContent = formatNumber(branch.total_tokens);
+                document.getElementById(`${prefix}Input`).textContent = formatNumber(branch.input_tokens);
+                document.getElementById(`${prefix}Output`).textContent = formatNumber(branch.output_tokens);
+                document.getElementById(`${prefix}Calls`).textContent = branch.call_count;
+
+                const { inputCost, outputCost, total } = calculateCost(
+                    branch.input_tokens,
+                    branch.output_tokens,
+                    branch.model || defaultModel
+                );
+                document.getElementById(`${prefix}CostInput`).textContent = inputCost.toFixed(4);
+                document.getElementById(`${prefix}CostOutput`).textContent = outputCost.toFixed(4);
+                document.getElementById(`${prefix}CostTotal`).textContent = total.toFixed(4);
+            });
+        }
+
+        function calculateCost(inputTokens, outputTokens, model) {
+            let inputCost = 0;
+            let outputCost = 0;
+
+            if (model.includes('omni')) {
+                inputCost = (inputTokens / 1000000) * 80;
+                outputCost = (outputTokens / 1000000) * 300;
+            } else if (model.includes('qwen3.7-plus')) {
+                inputCost = calculateQwen37Cost(inputTokens, 'input');
+                outputCost = calculateQwen37Cost(outputTokens, 'output');
+            } else {
+                inputCost = calculateTextCost(inputTokens, 'input');
+                outputCost = calculateTextCost(outputTokens, 'output');
+            }
+
+            return {
+                inputCost: inputCost,
+                outputCost: outputCost,
+                total: inputCost + outputCost
+            };
+        }
+
+        function calculateTextCost(tokens, type) {
+            if (tokens <= 0) return 0;
+
+            let rate = 0;
+
+            if (tokens <= 128000) {
+                rate = type === 'input' ? 0.8 : 2.0;
+            } else if (tokens <= 256000) {
+                rate = type === 'input' ? 2.4 : 20.0;
+            } else if (tokens <= 1000000) {
+                rate = type === 'input' ? 4.8 : 48.0;
+            } else {
+                rate = type === 'input' ? 4.8 : 48.0;
+            }
+
+            return (tokens / 1000000) * rate;
+        }
+
+        function calculateQwen37Cost(tokens, type) {
+            if (tokens <= 0) return 0;
+            const rate = tokens <= 256000
+                ? (type === 'input' ? 2 : 8)
+                : (type === 'input' ? 6 : 24);
+            return (tokens / 1000000) * rate;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(2) + 'K';
+            }
+            return num.toString();
+        }
+
+        async function refreshStats() {
+            await loadStats();
+        }
+
+        async function clearAllStats() {
+            if (!confirm('确定要清除所有统计数据吗？此操作不可恢复。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ai-interview/hr/token-dashboard/clear/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    await loadStats();
+                } else {
+                    alert('清除失败: ' + result.error);
+                }
+            } catch (err) {
+                alert('清除失败: ' + err.message);
+            }
+        }
+
+        async function applyAdminWorkspaceVisibility() {
+            try {
+                const pageToken = new URLSearchParams(window.location.search).get('token') || '';
+                const contextUrl = pageToken
+                    ? `/api/ai-interview/hr/auth-context/?token=${encodeURIComponent(pageToken)}`
+                    : '/api/ai-interview/hr/auth-context/';
+                const response = await fetch(contextUrl);
+                const data = await response.json();
+                if (response.ok && data.can_manage_hr_users) {
+                    document.querySelectorAll('[data-admin-only]').forEach(item => {
+                        item.style.display = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载权限信息失败:', error);
+            }
+        }
+
+        loadStats();
+        applyAdminWorkspaceVisibility();
+    </script>
+</body>
+</html>
